@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Variables CSS de la paleta: útiles para gradientes, sombras o estilos inline
+   donde las clases Tailwind no alcanzan. Mismo valor que el tailwind.config. */
+:root {
+  --color-azul-principal: #1B3A6B;
+  --color-azul-oscuro: #122952;
+  --color-amarillo-acento: #F5B700;
+  --color-amarillo-claro: #FFF8E1;
+  --color-verde-record: #1D9E54;
+  --color-verde-claro: rgba(29, 158, 84, 0.08);
+  --color-blanco: #FFFFFF;
+  --color-rojo: #A32D2D;
+
+  /* Tonos base de la app (cambian con modo oscuro) */
+  --bg-app: #F7F8FB;
+  --bg-tarjeta: #FFFFFF;
+  --texto-principal: #0F172A;
+  --texto-secundario: #475569;
+  --borde-sutil: rgba(15, 23, 42, 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-app: #0B1220;
+    --bg-tarjeta: #152238;
+    --texto-principal: #E2E8F0;
+    --texto-secundario: #94A3B8;
+    --borde-sutil: rgba(226, 232, 240, 0.12);
+  }
+}
+
+/* Reset mobile-first: mejor touch, sin subrayado residual, evitamos el zoom en iOS */
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: var(--bg-app);
+  color: var(--texto-principal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Evita zoom al enfocar inputs en iOS (ocurre cuando el font-size es <16px) */
+input,
+select,
+textarea {
+  font-size: 16px;
+}
+
+#root {
+  min-height: 100vh;
+}
