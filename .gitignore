@@ -30,3 +30,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+
+# Tooling interno para previews (capturas de pantalla con Playwright)
+screenshots/
+scripts/
