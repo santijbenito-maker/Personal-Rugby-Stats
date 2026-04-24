@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { Dashboard } from './pages/Dashboard';
 import { Partidos } from './pages/Partidos';
+import { NuevoPartido } from './pages/NuevoPartido';
+import { VerPartido } from './pages/VerPartido';
 import { Entrenos } from './pages/Entrenos';
 import { Gym } from './pages/Gym';
 import { Fisico } from './pages/Fisico';
@@ -21,6 +23,8 @@ function App() {
         <Route element={<Layout />}>
           <Route index element={<Dashboard />} />
           <Route path="partidos" element={<Partidos />} />
+          <Route path="partidos/nuevo" element={<NuevoPartido />} />
+          <Route path="partidos/:id" element={<VerPartido />} />
           <Route path="entrenos" element={<Entrenos />} />
           <Route path="gym" element={<Gym />} />
           <Route path="fisico" element={<Fisico />} />

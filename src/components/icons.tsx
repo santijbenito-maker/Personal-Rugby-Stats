@@ -102,6 +102,81 @@ export function IconoPerfil({ size = 24, className, strokeWidth = 2 }: IconProps
   );
 }
 
+// + (plus) — para botones "Cargar nuevo..."
+export function IconoMas({ size = 24, className, strokeWidth = 2 }: IconProps) {
+  return (
+    <svg {...base(size, className)} strokeWidth={strokeWidth} aria-hidden>
+      <path d="M12 5v14" />
+      <path d="M5 12h14" />
+    </svg>
+  );
+}
+
+// Flecha izquierda — volver
+export function IconoFlechaIzq({ size = 24, className, strokeWidth = 2 }: IconProps) {
+  return (
+    <svg {...base(size, className)} strokeWidth={strokeWidth} aria-hidden>
+      <path d="M19 12H5" />
+      <path d="m12 19-7-7 7-7" />
+    </svg>
+  );
+}
+
+// ─── Iconos de clima ───
+export function IconoSol({ size = 24, className, strokeWidth = 2 }: IconProps) {
+  return (
+    <svg {...base(size, className)} strokeWidth={strokeWidth} aria-hidden>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+    </svg>
+  );
+}
+
+export function IconoNube({ size = 24, className, strokeWidth = 2 }: IconProps) {
+  return (
+    <svg {...base(size, className)} strokeWidth={strokeWidth} aria-hidden>
+      <path d="M17.5 19a4.5 4.5 0 1 0-1-8.87A6 6 0 1 0 7 17h10.5Z" />
+    </svg>
+  );
+}
+
+export function IconoLluvia({ size = 24, className, strokeWidth = 2 }: IconProps) {
+  return (
+    <svg {...base(size, className)} strokeWidth={strokeWidth} aria-hidden>
+      <path d="M17.5 15a4.5 4.5 0 1 0-1-8.87A6 6 0 1 0 7 13h10.5Z" />
+      <path d="M8 19v2M12 19v2M16 19v2" />
+    </svg>
+  );
+}
+
+export function IconoFrio({ size = 24, className, strokeWidth = 2 }: IconProps) {
+  return (
+    <svg {...base(size, className)} strokeWidth={strokeWidth} aria-hidden>
+      <path d="M12 2v20M4.93 4.93l14.14 14.14M19.07 4.93 4.93 19.07M2 12h20" />
+      <path d="m6.5 6.5 1.5 1-1.5 1M15 5.5 12 8l-3-2.5M17.5 6.5 16 7.5l1.5 1M18.5 9 17 8l1 1.5M12 11l-2.5 3L12 17l2.5-3L12 11Z" />
+    </svg>
+  );
+}
+
+// Cerrar (X) — para remover items
+export function IconoCerrar({ size = 24, className, strokeWidth = 2 }: IconProps) {
+  return (
+    <svg {...base(size, className)} strokeWidth={strokeWidth} aria-hidden>
+      <path d="M18 6 6 18" />
+      <path d="m6 6 12 12" />
+    </svg>
+  );
+}
+
+// Chevron derecha — para detalles/abrir
+export function IconoChevronDer({ size = 24, className, strokeWidth = 2 }: IconProps) {
+  return (
+    <svg {...base(size, className)} strokeWidth={strokeWidth} aria-hidden>
+      <path d="m9 18 6-6-6-6" />
+    </svg>
+  );
+}
+
 /** Metadata de cada tab de la navegación principal. */
 export type TabNav = {
   ruta: string;
