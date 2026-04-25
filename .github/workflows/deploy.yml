@@ -1,7 +1,7 @@
 # Deploy automático a GitHub Pages.
 # Cada vez que se pushea a la branch principal o a la de desarrollo,
 # este workflow construye la app y la publica en
-# https://santijbenito-maker.github.io/personal-rugby-stats/
+# https://santijbenito-maker.github.io/Personal-Rugby-Stats/
 #
 # Requisito de una sola vez: ir a la repo en GitHub →
 #   Settings → Pages → "Build and deployment" → Source: GitHub Actions
@@ -44,8 +44,9 @@ jobs:
 
       - name: Build
         env:
-          # Esto hace que vite use base="/personal-rugby-stats/" en el build
-          VITE_BASE_PATH: /personal-rugby-stats/
+          # Esto hace que vite use base="/Personal-Rugby-Stats/" en el build.
+          # El casing tiene que coincidir con el nombre real del repo en GitHub.
+          VITE_BASE_PATH: /Personal-Rugby-Stats/
         run: npm run build
 
       - name: Configurar Pages

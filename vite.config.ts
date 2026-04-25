@@ -9,8 +9,8 @@ import path from 'node:path';
 //
 // La "base path" se setea según el entorno:
 // - Dev local: "/" (servidor en localhost:5173)
-// - GitHub Pages: "/personal-rugby-stats/" porque el repo se sirve en
-//   https://santijbenito-maker.github.io/personal-rugby-stats/
+// - GitHub Pages: "/Personal-Rugby-Stats/" porque el repo se sirve en
+//   https://santijbenito-maker.github.io/Personal-Rugby-Stats/
 //   El workflow de deploy setea VITE_BASE_PATH antes del build.
 const basePath = process.env.VITE_BASE_PATH ?? '/';
 
