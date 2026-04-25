@@ -50,6 +50,20 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Code-splitting manual: Recharts pesa ~250kb. Lo aislamos en su
+        // propio chunk para que sólo se cargue la primera vez que abrís
+        // dashboard / gym / físico (las pantallas con gráficos).
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          recharts: ['recharts'],
+          dexie: ['dexie', 'dexie-react-hooks'],
+        },
+      },
+    },
+  },
   server: {
     host: true,
     port: 5173,
