@@ -1,7 +1,15 @@
 import { db } from './schema';
 import { EJERCICIOS_BASE } from '../lib/ejerciciosBase';
 import { hoyISO, restarDias } from '../lib/fechas';
-import type { GymEjercicio, GymSesion, Partido, Entrenamiento, TipoEntreno } from '../types';
+import type {
+  GymEjercicio,
+  GymSesion,
+  Partido,
+  Entrenamiento,
+  TipoEntreno,
+  TestFisico,
+  Lesion,
+} from '../types';
 
 const now = () => Date.now();
 const uuid = () => crypto.randomUUID();
@@ -38,7 +46,13 @@ export async function cargarDatosDeEjemplo() {
   const partidosCount = await db.partidos.count();
   const gymCount = await db.gym_sesiones.count();
   const entrenosCount = await db.entrenamientos.count();
-  if (partidosCount + gymCount + entrenosCount > 0) return;
+  const testsCount = await db.tests_fisicos.count();
+  const lesionesCount = await db.lesiones.count();
+  if (
+    partidosCount + gymCount + entrenosCount + testsCount + lesionesCount >
+    0
+  )
+    return;
 
   await sembrarBibliotecaEjercicios();
   const ejercicios = await db.gym_ejercicios.toArray();
@@ -48,12 +62,20 @@ export async function cargarDatosDeEjemplo() {
   const partidos = construirPartidos();
   const entrenamientos = construirEntrenamientos();
   const gym = construirSesionesGym(ejId);
+  const tests = construirTestsFisicos();
+  const lesiones = construirLesiones();
 
-  await db.transaction('rw', db.partidos, db.entrenamientos, db.gym_sesiones, async () => {
-    await db.partidos.bulkAdd(partidos);
-    await db.entrenamientos.bulkAdd(entrenamientos);
-    await db.gym_sesiones.bulkAdd(gym);
-  });
+  await db.transaction(
+    'rw',
+    [db.partidos, db.entrenamientos, db.gym_sesiones, db.tests_fisicos, db.lesiones],
+    async () => {
+      await db.partidos.bulkAdd(partidos);
+      await db.entrenamientos.bulkAdd(entrenamientos);
+      await db.gym_sesiones.bulkAdd(gym);
+      await db.tests_fisicos.bulkAdd(tests);
+      await db.lesiones.bulkAdd(lesiones);
+    },
+  );
 }
 
 // ───────────────────────────────────────────────────────────────
@@ -376,4 +398,71 @@ function construirSesionesGym(ejId: (nombre: string) => string): GymSesion[] {
   }
 
   return sesiones;
+}
+
+function construirTestsFisicos(): TestFisico[] {
+  const t = now();
+  // 3 tests: hace 1 año, hace 6 meses, hace 1 semana — para ver evolución.
+  return [
+    {
+      id: uuid(),
+      fecha: restarDias(hoyISO(), 365),
+      pesoCorporal: 52.5,
+      altura: 165,
+      t40m: 6.1,
+      beepTest: 8.2,
+      flexiones: 28,
+      abdominales: 38,
+      notas: 'Primera medición de la temporada anterior.',
+      creadoEn: t,
+      actualizadoEn: t,
+    },
+    {
+      id: uuid(),
+      fecha: restarDias(hoyISO(), 180),
+      pesoCorporal: 55.0,
+      altura: 168,
+      t40m: 5.9,
+      beepTest: 9.0,
+      flexiones: 34,
+      abdominales: 45,
+      creadoEn: t,
+      actualizadoEn: t,
+    },
+    {
+      id: uuid(),
+      fecha: restarDias(hoyISO(), 7),
+      pesoCorporal: 57.8,
+      altura: 171,
+      t40m: 5.7,
+      beepTest: 10.3,
+      flexiones: 40,
+      abdominales: 52,
+      notas: 'Buena progresión, mejoré en velocidad y resistencia.',
+      creadoEn: t,
+      actualizadoEn: t,
+    },
+  ];
+}
+
+function construirLesiones(): Lesion[] {
+  const t = now();
+  // Una sola lesión leve recuperada para mostrar el estado "Recuperado"
+  // y que la métrica "Lesiones activas" arranque en 0 → "Todo sano".
+  return [
+    {
+      id: uuid(),
+      fecha: restarDias(hoyISO(), 60),
+      zona: 'Muslo',
+      lado: 'Derecho',
+      tipo: 'Muscular',
+      gravedad: 'Leve',
+      diasEstimados: 7,
+      fechaAlta: restarDias(hoyISO(), 52),
+      tratamiento: 'Kinesiología + hielo + estiramientos leves.',
+      notas: 'Contractura después de entrenamiento intenso.',
+      creadoEn: t,
+      actualizadoEn: t,
+    },
+  ];
 }

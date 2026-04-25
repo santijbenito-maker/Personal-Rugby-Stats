@@ -11,7 +11,11 @@ import { Gym } from './pages/Gym';
 import { NuevaSesionGym } from './pages/NuevaSesionGym';
 import { VerSesionGym } from './pages/VerSesionGym';
 import { Fisico } from './pages/Fisico';
+import { NuevoTest } from './pages/NuevoTest';
+import { VerTest } from './pages/VerTest';
 import { Lesiones } from './pages/Lesiones';
+import { NuevaLesion } from './pages/NuevaLesion';
+import { VerLesion } from './pages/VerLesion';
 import { Perfil } from './pages/Perfil';
 import { NoEncontrado } from './pages/NoEncontrado';
 
@@ -36,7 +40,11 @@ function App() {
           <Route path="gym/nuevo" element={<NuevaSesionGym />} />
           <Route path="gym/:id" element={<VerSesionGym />} />
           <Route path="fisico" element={<Fisico />} />
+          <Route path="fisico/nuevo" element={<NuevoTest />} />
+          <Route path="fisico/:id" element={<VerTest />} />
           <Route path="lesiones" element={<Lesiones />} />
+          <Route path="lesiones/nueva" element={<NuevaLesion />} />
+          <Route path="lesiones/:id" element={<VerLesion />} />
           <Route path="perfil" element={<Perfil />} />
           <Route path="*" element={<NoEncontrado />} />
         </Route>
