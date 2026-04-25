@@ -67,6 +67,13 @@ export function metricaAsistencia(entrenos: Entrenamiento[]): number | null {
   return Math.round((cumplieron / delMes.length) * 100);
 }
 
+/** Cantidad de sesiones de gym del mes actual vs. mes anterior. */
+export function metricaSesionesGym(sesiones: GymSesion[]): MetricaDelta {
+  const actual = sesiones.filter((s) => esMesActual(s.fecha)).length;
+  const anterior = sesiones.filter((s) => esMesAnterior(s.fecha)).length;
+  return { valor: actual, delta: actual - anterior };
+}
+
 /** Cantidad de PRs del mes actual vs. mes anterior. */
 export function metricaPRs(sesiones: GymSesion[]): MetricaDelta {
   const contarPRs = (arr: GymSesion[]) =>

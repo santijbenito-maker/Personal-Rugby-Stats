@@ -8,6 +8,8 @@ import { Entrenos } from './pages/Entrenos';
 import { NuevoEntreno } from './pages/NuevoEntreno';
 import { VerEntreno } from './pages/VerEntreno';
 import { Gym } from './pages/Gym';
+import { NuevaSesionGym } from './pages/NuevaSesionGym';
+import { VerSesionGym } from './pages/VerSesionGym';
 import { Fisico } from './pages/Fisico';
 import { Lesiones } from './pages/Lesiones';
 import { Perfil } from './pages/Perfil';
@@ -31,6 +33,8 @@ function App() {
           <Route path="entrenos/nuevo" element={<NuevoEntreno />} />
           <Route path="entrenos/:id" element={<VerEntreno />} />
           <Route path="gym" element={<Gym />} />
+          <Route path="gym/nuevo" element={<NuevaSesionGym />} />
+          <Route path="gym/:id" element={<VerSesionGym />} />
           <Route path="fisico" element={<Fisico />} />
           <Route path="lesiones" element={<Lesiones />} />
           <Route path="perfil" element={<Perfil />} />

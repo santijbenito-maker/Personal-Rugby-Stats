@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import { sembrarBibliotecaEjercicios } from './db/seed';
+import { ToasterProvider } from './components/Toaster';
 import './index.css';
 
 // Carga la biblioteca base de ejercicios la primera vez que se abre la app.
@@ -13,6 +14,8 @@ sembrarBibliotecaEjercicios().catch((err) =>
 // Punto de entrada de la app: monta <App /> dentro del div#root de index.html.
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <ToasterProvider>
+      <App />
+    </ToasterProvider>
   </StrictMode>,
 );
