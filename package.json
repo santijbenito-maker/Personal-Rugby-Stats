@@ -6,7 +6,7 @@
   "description": "App personal de estadísticas de rugby — Santiago Benito (M15 TLTC)",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && cp dist/index.html dist/404.html",
     "preview": "vite preview",
     "lint": "tsc -b --noEmit"
   },

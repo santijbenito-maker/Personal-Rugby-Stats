@@ -6,7 +6,16 @@ import path from 'node:path';
 // Configuración de Vite: React + alias "@/" + PWA instalable.
 // El plugin VitePWA genera manifest.webmanifest y un Service Worker
 // con Workbox que cachea los assets para que la app funcione offline.
+//
+// La "base path" se setea según el entorno:
+// - Dev local: "/" (servidor en localhost:5173)
+// - GitHub Pages: "/personal-rugby-stats/" porque el repo se sirve en
+//   https://santijbenito-maker.github.io/personal-rugby-stats/
+//   El workflow de deploy setea VITE_BASE_PATH antes del build.
+const basePath = process.env.VITE_BASE_PATH ?? '/';
+
 export default defineConfig({
+  base: basePath,
   plugins: [
     react(),
     VitePWA({
@@ -21,12 +30,14 @@ export default defineConfig({
         background_color: '#1B3A6B',
         display: 'standalone',
         orientation: 'portrait',
-        start_url: '/',
-        scope: '/',
+        start_url: basePath,
+        scope: basePath,
         icons: [
-          { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
-          { src: '/icon-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          // Sin slash inicial: se resuelven relativos al manifest, así
+          // funcionan tanto en "/" como en "/personal-rugby-stats/".
+          { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
+          { src: 'icon-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
         categories: ['sports', 'health', 'fitness'],
       },
@@ -35,7 +46,7 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
         // Cuando una request va a navigation y no está cacheada, devolver el index.html
         // (necesario para que las rutas client-side funcionen offline)
-        navigateFallback: '/index.html',
+        navigateFallback: `${basePath}index.html`,
         // Limitar tamaño de cache (ahora la base es ~830kb por Recharts)
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
       },

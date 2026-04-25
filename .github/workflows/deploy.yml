@@ -1,0 +1,68 @@
+# Deploy automático a GitHub Pages.
+# Cada vez que se pushea a la branch principal o a la de desarrollo,
+# este workflow construye la app y la publica en
+# https://santijbenito-maker.github.io/personal-rugby-stats/
+#
+# Requisito de una sola vez: ir a la repo en GitHub →
+#   Settings → Pages → "Build and deployment" → Source: GitHub Actions
+name: Deploy a GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - claude/rugby-stats-app-G1Z4i
+  # También se puede correr manualmente desde la UI de Actions
+  workflow_dispatch:
+
+# Permisos mínimos necesarios para que la action de Pages pueda publicar
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Si llegan dos pushes seguidos, el último gana (no encolamos varios deploys)
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Build
+        env:
+          # Esto hace que vite use base="/personal-rugby-stats/" en el build
+          VITE_BASE_PATH: /personal-rugby-stats/
+        run: npm run build
+
+      - name: Configurar Pages
+        uses: actions/configure-pages@v5
+
+      - name: Subir artifact de Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Desplegar a GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
