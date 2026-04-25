@@ -49,6 +49,24 @@ export function metricaTackles(partidos: Partido[]): MetricaDelta {
   return { valor: actual, delta: actual - anterior };
 }
 
+/** Sesiones de entrenamiento del mes actual vs. mes anterior. */
+export function metricaSesionesEntreno(entrenos: Entrenamiento[]): MetricaDelta {
+  const actual = entrenos.filter((e) => esMesActual(e.fecha)).length;
+  const anterior = entrenos.filter((e) => esMesAnterior(e.fecha)).length;
+  return { valor: actual, delta: actual - anterior };
+}
+
+/**
+ * Porcentaje de asistencia del mes actual: presentes + tardes sobre el total.
+ * Devuelve null si no hay sesiones registradas este mes.
+ */
+export function metricaAsistencia(entrenos: Entrenamiento[]): number | null {
+  const delMes = entrenos.filter((e) => esMesActual(e.fecha));
+  if (delMes.length === 0) return null;
+  const cumplieron = delMes.filter((e) => e.asistencia !== 'Ausente').length;
+  return Math.round((cumplieron / delMes.length) * 100);
+}
+
 /** Cantidad de PRs del mes actual vs. mes anterior. */
 export function metricaPRs(sesiones: GymSesion[]): MetricaDelta {
   const contarPRs = (arr: GymSesion[]) =>
