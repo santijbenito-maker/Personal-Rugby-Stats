@@ -44,11 +44,15 @@ class RugbyDB extends Dexie {
 export const db = new RugbyDB();
 
 /**
- * Vacía todas las tablas. Útil para "empezar limpio" desde Perfil
- * o para tests. No elimina la base de datos, sólo los registros.
+ * Vacía todas las tablas y vuelve a sembrar la biblioteca de ejercicios
+ * (para que Santi pueda seguir cargando gym sin perder los nombres base).
+ * No elimina la base de datos, sólo los registros.
  */
 export async function borrarTodosLosDatos() {
+  // Import diferido para evitar ciclo: schema <-> seed.
+  const { sembrarBibliotecaEjercicios } = await import('./seed');
   await db.transaction('rw', db.tables, async () => {
     await Promise.all(db.tables.map((t) => t.clear()));
   });
+  await sembrarBibliotecaEjercicios();
 }
