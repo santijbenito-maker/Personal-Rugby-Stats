@@ -6,6 +6,7 @@ import { exportarTodo, descargarBackup } from '../lib/export';
 import { Crest } from '../components/Crest';
 import { ImportarModal } from '../components/ImportarModal';
 import { BorrarConfirmacion } from '../components/BorrarConfirmacion';
+import { InstalarApp } from '../components/InstalarApp';
 import { useToast } from '../components/Toaster';
 
 export function Perfil() {
@@ -93,6 +94,9 @@ export function Perfil() {
           </ul>
         </div>
       )}
+
+      {/* Instalar app (sólo si el navegador puede ofrecer el prompt) */}
+      <InstalarApp />
 
       {/* Backup: Exportar / Importar */}
       <div className="bg-white dark:bg-slate-900 rounded-xl shadow-tarjeta border border-slate-200 dark:border-slate-800 p-5 space-y-3">
