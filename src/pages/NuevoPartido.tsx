@@ -117,9 +117,20 @@ export function NuevoPartido() {
   const [guardando, setGuardando] = useState(false);
 
   // Cuando llega el partido existente, lo cargamos en el state (una sola vez).
+  // Aplicamos los defaults de partidoInicial() para "rellenar" cualquier campo
+  // que el partido viejo no tenga (ej. knock-ons y uso del pie agregados
+  // después). Al spread de partidoExistente le sobreescribimos los campos
+  // undefined con sus defaults para que los counters siempre tengan number.
   useEffect(() => {
     if (esEdicion && partidoExistente && !cargado) {
-      setP(partidoExistente);
+      const defaults = partidoInicial();
+      const normalizado: Partido = {
+        ...defaults,
+        ...partidoExistente,
+        knockOns: partidoExistente.knockOns ?? 0,
+        usoPie: partidoExistente.usoPie ?? 0,
+      };
+      setP(normalizado);
       setCargado(true);
     }
   }, [esEdicion, partidoExistente, cargado]);

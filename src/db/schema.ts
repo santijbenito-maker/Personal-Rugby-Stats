@@ -53,6 +53,31 @@ class RugbyDB extends Dexie {
       config: 'clave',
       videos: 'id, partidoId, creadoEn',
     });
+
+    // Versión 3: backfill de campos nuevos en Partido (knockOns y usoPie).
+    // Los partidos guardados con versiones previas no tenían estos campos
+    // y eso rompía los counters al editar (no podían sumar/restar a `undefined`).
+    // El upgrade los rellena con 0.
+    this.version(3)
+      .stores({
+        partidos: 'id, fecha',
+        entrenamientos: 'id, fecha, asistencia',
+        gym_sesiones: 'id, fecha, foco',
+        gym_ejercicios: 'id, nombre, grupoMuscular, frecuenciaDeUso',
+        tests_fisicos: 'id, fecha',
+        lesiones: 'id, fecha, fechaAlta',
+        config: 'clave',
+        videos: 'id, partidoId, creadoEn',
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table('partidos')
+          .toCollection()
+          .modify((p: Partial<Partido>) => {
+            if (typeof p.knockOns !== 'number') p.knockOns = 0;
+            if (typeof p.usoPie !== 'number') p.usoPie = 0;
+          });
+      });
   }
 }
 
