@@ -82,7 +82,19 @@ export function ResumenPartido({ partido: p }: ResumenPartidoProps) {
         />
         <LineaResumen
           titulo="Defensa"
-          valor={`${p.tacklesEfectivos} tackles efectivos · ${p.tacklesFallados} fallados · ${p.turnoversGanados} turnovers${p.intercepciones ? ` · ${p.intercepciones} intercep.` : ''}`}
+          valor={
+            [
+              `${p.tacklesEfectivos} tackles efectivos`,
+              `${p.tacklesFallados} fallados`,
+              `${p.turnoversGanados} turnovers`,
+              p.intercepciones > 0 ? `${p.intercepciones} intercep.` : null,
+              (p.recepcionKicks ?? 0) > 0 ? `${p.recepcionKicks} recepciones` : null,
+              `cobertura ${p.coberturas ?? 3}/5`,
+              p.kicksDespeje > 0 ? `${p.kicksDespeje} despejes` : null,
+            ]
+              .filter(Boolean)
+              .join(' · ')
+          }
         />
         <LineaResumen
           titulo="Kicks"
@@ -94,7 +106,6 @@ export function ResumenPartido({ partido: p }: ResumenPartidoProps) {
               pctKicksTouch !== null
                 ? `touch ${p.kicksTouchEfectivos}/${p.kicksTouchIntentados} = ${pctKicksTouch}%`
                 : null,
-              p.kicksDespeje > 0 ? `${p.kicksDespeje} despejes` : null,
               p.drops > 0 ? `${p.drops} drops` : null,
             ]
               .filter(Boolean)

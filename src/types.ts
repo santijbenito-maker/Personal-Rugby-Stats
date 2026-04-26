@@ -46,6 +46,8 @@ export type Partido = {
   tacklesFallados: number;
   turnoversGanados: number;
   intercepciones: number;
+  recepcionKicks: number;
+  coberturas: number; // 1-5 (rating)
   // Kicks
   kicksPaloConvertidos: number;
   kicksPaloIntentados: number;

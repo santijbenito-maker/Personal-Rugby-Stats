@@ -1,8 +1,12 @@
 type Slider10Props = {
   label: string;
-  /** Valor entero 1-10. */
+  /** Valor entero. Por default rango 1-10. */
   valor: number;
   onChange: (v: number) => void;
+  /** Mínimo del rango (default 1). */
+  min?: number;
+  /** Máximo del rango (default 10). Se muestra como "valor/max" arriba a la derecha. */
+  max?: number;
   /** Ícono/emoji a la izquierda del label. */
   hint?: string;
   /** Texto descriptivo debajo del label. */
@@ -25,6 +29,8 @@ export function Slider10({
   label,
   valor,
   onChange,
+  min = 1,
+  max = 10,
   hint,
   descripcion,
   etiquetaMin,
@@ -32,7 +38,8 @@ export function Slider10({
   etiquetaDinamica,
   colorBarra = '#1B3A6B',
 }: Slider10Props) {
-  const pct = ((valor - 1) / 9) * 100;
+  const rango = Math.max(1, max - min);
+  const pct = ((valor - min) / rango) * 100;
   const dinamica = etiquetaDinamica ? etiquetaDinamica(valor) : undefined;
 
   return (
@@ -45,7 +52,7 @@ export function Slider10({
         </p>
         <span className="text-lg font-bold text-azul-principal dark:text-amarillo-acento tabular-nums">
           {valor}
-          <span className="text-sm font-medium text-slate-400">/10</span>
+          <span className="text-sm font-medium text-slate-400">/{max}</span>
         </span>
       </div>
 
@@ -56,8 +63,8 @@ export function Slider10({
       {/* Slider con track coloreado hasta el valor */}
       <input
         type="range"
-        min={1}
-        max={10}
+        min={min}
+        max={max}
         step={1}
         value={valor}
         onChange={(e) => onChange(Number(e.target.value))}

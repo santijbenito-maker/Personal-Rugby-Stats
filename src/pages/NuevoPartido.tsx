@@ -62,6 +62,8 @@ function partidoInicial(): Partido {
     tacklesFallados: 0,
     turnoversGanados: 0,
     intercepciones: 0,
+    recepcionKicks: 0,
+    coberturas: 3,
     kicksPaloConvertidos: 0,
     kicksPaloIntentados: 0,
     kicksTouchEfectivos: 0,
@@ -129,6 +131,8 @@ export function NuevoPartido() {
         ...partidoExistente,
         knockOns: partidoExistente.knockOns ?? 0,
         usoPie: partidoExistente.usoPie ?? 0,
+        recepcionKicks: partidoExistente.recepcionKicks ?? 0,
+        coberturas: partidoExistente.coberturas ?? 3,
       };
       setP(normalizado);
       setCargado(true);
@@ -542,11 +546,37 @@ function PestañaAtaque({ p, set }: { p: Partido; set: Setter }) {
 
 function PestañaDefensa({ p, set }: { p: Partido; set: Setter }) {
   return (
-    <div className="grid grid-cols-2 gap-3">
-      <Counter label="Efectivos" hint="✅" valor={p.tacklesEfectivos} onChange={(v) => set('tacklesEfectivos', v)} />
-      <Counter label="Fallados" hint="❌" valor={p.tacklesFallados} onChange={(v) => set('tacklesFallados', v)} />
-      <Counter label="Turnovers ganados" valor={p.turnoversGanados} onChange={(v) => set('turnoversGanados', v)} />
-      <Counter label="Intercepciones" valor={p.intercepciones} onChange={(v) => set('intercepciones', v)} />
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3">
+        <Counter label="Efectivos" hint="✅" valor={p.tacklesEfectivos} onChange={(v) => set('tacklesEfectivos', v)} />
+        <Counter label="Fallados" hint="❌" valor={p.tacklesFallados} onChange={(v) => set('tacklesFallados', v)} />
+        <Counter label="Turnovers ganados" valor={p.turnoversGanados} onChange={(v) => set('turnoversGanados', v)} />
+        <Counter label="Intercepciones" valor={p.intercepciones} onChange={(v) => set('intercepciones', v)} />
+        <Counter
+          label="Recepción de kicks"
+          hint="🙌"
+          valor={p.recepcionKicks}
+          onChange={(v) => set('recepcionKicks', v)}
+        />
+        <Counter
+          label="Kicks de despeje"
+          hint="🦶"
+          valor={p.kicksDespeje}
+          onChange={(v) => set('kicksDespeje', v)}
+        />
+      </div>
+      <Slider10
+        label="Coberturas"
+        hint="🛡️"
+        descripcion="Calidad de la cobertura defensiva (1-5)"
+        valor={p.coberturas}
+        onChange={(v) => set('coberturas', v)}
+        min={1}
+        max={5}
+        etiquetaMin="floja"
+        etiquetaMax="sólida"
+        colorBarra="#F5B700"
+      />
     </div>
   );
 }
@@ -574,10 +604,10 @@ function PestañaKicks({ p, set }: { p: Partido; set: Setter }) {
         onChangeNumerador={(v) => set('kicksTouchEfectivos', v)}
         onChangeDenominador={(v) => set('kicksTouchIntentados', v)}
       />
-      <div className="grid grid-cols-2 gap-3">
-        <Counter label="Kicks de despeje" valor={p.kicksDespeje} onChange={(v) => set('kicksDespeje', v)} />
-        <Counter label="Drops convertidos" valor={p.drops} onChange={(v) => set('drops', v)} />
-      </div>
+      <Counter label="Drops convertidos" valor={p.drops} onChange={(v) => set('drops', v)} />
+      <p className="text-[11px] text-slate-500 dark:text-slate-400 italic">
+        Kicks de despeje pasaron a la pestaña Defensa.
+      </p>
     </div>
   );
 }

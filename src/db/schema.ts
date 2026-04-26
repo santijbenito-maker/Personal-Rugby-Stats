@@ -78,6 +78,31 @@ class RugbyDB extends Dexie {
             if (typeof p.usoPie !== 'number') p.usoPie = 0;
           });
       });
+
+    // Versión 4: backfill de recepcionKicks (counter) y coberturas (rating 1-5).
+    // Mismo motivo que la v3: los partidos viejos no tenían estos campos,
+    // ahora se agregan a la pestaña Defensa del formulario.
+    this.version(4)
+      .stores({
+        partidos: 'id, fecha',
+        entrenamientos: 'id, fecha, asistencia',
+        gym_sesiones: 'id, fecha, foco',
+        gym_ejercicios: 'id, nombre, grupoMuscular, frecuenciaDeUso',
+        tests_fisicos: 'id, fecha',
+        lesiones: 'id, fecha, fechaAlta',
+        config: 'clave',
+        videos: 'id, partidoId, creadoEn',
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table('partidos')
+          .toCollection()
+          .modify((p: Partial<Partido>) => {
+            if (typeof p.recepcionKicks !== 'number') p.recepcionKicks = 0;
+            // Default 3 (mitad del rango 1-5) — neutral
+            if (typeof p.coberturas !== 'number') p.coberturas = 3;
+          });
+      });
   }
 }
 
