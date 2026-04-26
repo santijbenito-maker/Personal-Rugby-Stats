@@ -7,6 +7,7 @@ import type {
   TestFisico,
   Lesion,
   Config,
+  VideoPartido,
 } from '../types';
 
 /**
@@ -23,6 +24,7 @@ class RugbyDB extends Dexie {
   tests_fisicos!: Table<TestFisico, string>;
   lesiones!: Table<Lesion, string>;
   config!: Table<Config, string>;
+  videos!: Table<VideoPartido, string>;
 
   constructor() {
     super('RugbyStatsSB');
@@ -37,6 +39,19 @@ class RugbyDB extends Dexie {
       tests_fisicos: 'id, fecha',
       lesiones: 'id, fecha, fechaAlta',
       config: 'clave',
+    });
+
+    // Versión 2: agregamos la tabla de videos, indexada por partidoId
+    // para listar rápido los videos de un partido.
+    this.version(2).stores({
+      partidos: 'id, fecha',
+      entrenamientos: 'id, fecha, asistencia',
+      gym_sesiones: 'id, fecha, foco',
+      gym_ejercicios: 'id, nombre, grupoMuscular, frecuenciaDeUso',
+      tests_fisicos: 'id, fecha',
+      lesiones: 'id, fecha, fechaAlta',
+      config: 'clave',
+      videos: 'id, partidoId, creadoEn',
     });
   }
 }

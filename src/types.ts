@@ -210,6 +210,23 @@ export type Lesion = {
 };
 
 // ───────────────────────────────────────────────────────────────
+// Videos (binarios adjuntos a un partido)
+// ───────────────────────────────────────────────────────────────
+
+export type VideoPartido = {
+  id: string;
+  partidoId: string;
+  nombre: string;
+  mimeType: string;
+  tamañoBytes: number;
+  /** Archivo en sí — Blob de IndexedDB. */
+  blob: Blob;
+  /** Notas del clip: ej. "ensayo segunda mitad" */
+  descripcion?: string;
+  creadoEn: number;
+};
+
+// ───────────────────────────────────────────────────────────────
 // Config (clave-valor)
 // ───────────────────────────────────────────────────────────────
 

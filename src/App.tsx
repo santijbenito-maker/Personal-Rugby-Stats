@@ -75,6 +75,14 @@ function App() {
             }
           />
           <Route
+            path="partidos/:id/editar"
+            element={
+              <Suspense fallback={<LoadingSkeleton />}>
+                <NuevoPartido />
+              </Suspense>
+            }
+          />
+          <Route
             path="entrenos"
             element={
               <Suspense fallback={<LoadingSkeleton />}>

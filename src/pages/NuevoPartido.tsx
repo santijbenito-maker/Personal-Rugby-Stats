@@ -1,7 +1,9 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, Link, useParams } from 'react-router-dom';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/schema';
 import { hoyISO } from '../lib/fechas';
+import { LoadingSkeleton } from '../components/LoadingSkeleton';
 import type {
   Partido,
   Torneo,
@@ -99,10 +101,33 @@ const TABS: { id: TabStats; label: string }[] = [
 
 export function NuevoPartido() {
   const navigate = useNavigate();
+  // En modo edición la ruta es /partidos/:id/editar; el componente recibe el id
+  // y carga el partido existente. En modo creación :id es undefined.
+  const { id } = useParams<{ id?: string }>();
+  const esEdicion = Boolean(id);
+  const partidoExistente = useLiveQuery(
+    () => (id ? db.partidos.get(id) : undefined),
+    [id],
+  );
+
   const [p, setP] = useState<Partido>(partidoInicial);
+  const [cargado, setCargado] = useState(!esEdicion);
   const [tab, setTab] = useState<TabStats>('ataque');
   const [error, setError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
+
+  // Cuando llega el partido existente, lo cargamos en el state (una sola vez).
+  useEffect(() => {
+    if (esEdicion && partidoExistente && !cargado) {
+      setP(partidoExistente);
+      setCargado(true);
+    }
+  }, [esEdicion, partidoExistente, cargado]);
+
+  // Si es edición y la query terminó pero no encontró el partido, redirigir.
+  if (esEdicion && partidoExistente === undefined) {
+    return <LoadingSkeleton />;
+  }
 
   /** Helper para actualizar un campo del partido. */
   const set = <K extends keyof Partido>(clave: K, v: Partido[K]) =>
@@ -118,8 +143,11 @@ export function NuevoPartido() {
     setError(null);
     setGuardando(true);
     try {
-      await db.partidos.add({ ...p, rival: p.rival.trim() });
-      navigate('/partidos');
+      // put = upsert: crea o reemplaza por id, así sirve para nuevo y para
+      // editar con el mismo código.
+      await db.partidos.put({ ...p, rival: p.rival.trim() });
+      // En edición volvemos al detalle; en creación volvemos a la lista.
+      navigate(esEdicion ? `/partidos/${p.id}` : '/partidos');
     } finally {
       setGuardando(false);
     }
@@ -130,16 +158,18 @@ export function NuevoPartido() {
       {/* Cabecera con botón volver */}
       <div className="flex items-center gap-3">
         <Link
-          to="/partidos"
-          aria-label="Volver a partidos"
+          to={esEdicion ? `/partidos/${p.id}` : '/partidos'}
+          aria-label="Volver"
           className="p-2 rounded-full hover:bg-slate-200/50 dark:hover:bg-slate-800 transition"
         >
           <IconoFlechaIzq size={22} />
         </Link>
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Nuevo partido</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+            {esEdicion ? 'Editar partido' : 'Nuevo partido'}
+          </h1>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            Cargá todos los datos del partido
+            {esEdicion ? 'Cambiá los campos que quieras y guardá' : 'Cargá todos los datos del partido'}
           </p>
         </div>
       </div>
@@ -355,7 +385,7 @@ export function NuevoPartido() {
       {/* Botones */}
       <div className="flex gap-3 sticky bottom-20 md:bottom-0 pt-2">
         <Link
-          to="/partidos"
+          to={esEdicion ? `/partidos/${p.id}` : '/partidos'}
           className="flex-1 text-center px-4 py-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
         >
           Cancelar
@@ -366,7 +396,7 @@ export function NuevoPartido() {
           disabled={guardando}
           className="flex-1 px-4 py-3 rounded-lg bg-amarillo-acento hover:brightness-95 text-azul-oscuro font-bold shadow transition disabled:opacity-50"
         >
-          {guardando ? 'Guardando…' : 'Guardar partido'}
+          {guardando ? 'Guardando…' : esEdicion ? 'Guardar cambios' : 'Guardar partido'}
         </button>
       </div>
     </div>

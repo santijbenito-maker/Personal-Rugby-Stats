@@ -3,7 +3,9 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/schema';
 import { formatoLargo, hace } from '../lib/fechas';
 import { ResumenPartido } from '../components/ResumenPartido';
+import { VideosPartido } from '../components/VideosPartido';
 import { IconoFlechaIzq } from '../components/icons';
+import { eliminarVideosDePartido } from '../lib/videos';
 
 export function VerPartido() {
   const { id } = useParams<{ id: string }>();
@@ -23,7 +25,8 @@ export function VerPartido() {
   if (!partido) return <PartidoNoEncontrado />;
 
   const handleBorrar = async () => {
-    if (!confirm(`¿Borrar el partido vs ${partido.rival}?`)) return;
+    if (!confirm(`¿Borrar el partido vs ${partido.rival}? También se borran sus videos.`)) return;
+    await eliminarVideosDePartido(partido.id);
     await db.partidos.delete(partido.id);
     navigate('/partidos');
   };
@@ -52,6 +55,9 @@ export function VerPartido() {
       {/* Resumen completo */}
       <ResumenPartido partido={partido} />
 
+      {/* Videos del partido */}
+      <VideosPartido partidoId={partido.id} />
+
       {/* Notas (si hay alguna) */}
       {(partido.notasBien || partido.notasMejorar || partido.notasEntrenador) && (
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 space-y-3">
@@ -74,6 +80,12 @@ export function VerPartido() {
 
       {/* Acciones */}
       <div className="flex gap-3">
+        <Link
+          to={`/partidos/${partido.id}/editar`}
+          className="flex-1 text-center px-4 py-2.5 rounded-lg bg-azul-principal hover:bg-azul-oscuro text-white font-semibold transition"
+        >
+          ✏ Editar
+        </Link>
         <button
           type="button"
           onClick={handleBorrar}

@@ -153,41 +153,45 @@ export type ModoImport = 'reemplazar' | 'sumar';
 
 /**
  * Importa un backup a la base.
- * - "reemplazar": vacía las tablas y vuelca el backup completo.
- * - "sumar": agrega los registros que no existan (por id), conserva los actuales.
+ * - "reemplazar": vacía las tablas que vienen en el backup y las vuelca.
+ *   IMPORTANTE: la tabla "videos" no se incluye nunca en el backup ni se
+ *   borra acá — los videos del dispositivo se preservan al importar.
+ * - "sumar": hace upsert por id (agrega si no existe, actualiza si ya está).
  */
 export async function importarBackup(b: Backup, modo: ModoImport) {
-  await db.transaction(
-    'rw',
-    [
-      db.partidos,
-      db.entrenamientos,
-      db.gym_sesiones,
-      db.gym_ejercicios,
-      db.tests_fisicos,
-      db.lesiones,
-      db.config,
-    ],
-    async () => {
-      if (modo === 'reemplazar') {
-        await Promise.all(db.tables.map((t) => t.clear()));
-        await db.partidos.bulkAdd(b.partidos);
-        await db.entrenamientos.bulkAdd(b.entrenamientos);
-        await db.gym_sesiones.bulkAdd(b.gym_sesiones);
-        await db.gym_ejercicios.bulkAdd(b.gym_ejercicios);
-        await db.tests_fisicos.bulkAdd(b.tests_fisicos);
-        await db.lesiones.bulkAdd(b.lesiones);
-        await db.config.bulkAdd(b.config);
-      } else {
-        // bulkPut hace upsert: agrega si no existe, actualiza si ya está.
-        await db.partidos.bulkPut(b.partidos);
-        await db.entrenamientos.bulkPut(b.entrenamientos);
-        await db.gym_sesiones.bulkPut(b.gym_sesiones);
-        await db.gym_ejercicios.bulkPut(b.gym_ejercicios);
-        await db.tests_fisicos.bulkPut(b.tests_fisicos);
-        await db.lesiones.bulkPut(b.lesiones);
-        await db.config.bulkPut(b.config);
-      }
-    },
-  );
+  // Tablas que viajan en el backup. La tabla videos NO está acá a propósito
+  // (los videos son grandes y locales al dispositivo).
+  const tablasEnBackup = [
+    db.partidos,
+    db.entrenamientos,
+    db.gym_sesiones,
+    db.gym_ejercicios,
+    db.tests_fisicos,
+    db.lesiones,
+    db.config,
+  ];
+
+  await db.transaction('rw', tablasEnBackup, async () => {
+    if (modo === 'reemplazar') {
+      // Sólo limpiamos las tablas que vienen en el backup, no todas las de la
+      // base — así los videos no se pierden al restaurar.
+      await Promise.all(tablasEnBackup.map((t) => t.clear()));
+      await db.partidos.bulkAdd(b.partidos);
+      await db.entrenamientos.bulkAdd(b.entrenamientos);
+      await db.gym_sesiones.bulkAdd(b.gym_sesiones);
+      await db.gym_ejercicios.bulkAdd(b.gym_ejercicios);
+      await db.tests_fisicos.bulkAdd(b.tests_fisicos);
+      await db.lesiones.bulkAdd(b.lesiones);
+      await db.config.bulkAdd(b.config);
+    } else {
+      // bulkPut hace upsert: agrega si no existe, actualiza si ya está.
+      await db.partidos.bulkPut(b.partidos);
+      await db.entrenamientos.bulkPut(b.entrenamientos);
+      await db.gym_sesiones.bulkPut(b.gym_sesiones);
+      await db.gym_ejercicios.bulkPut(b.gym_ejercicios);
+      await db.tests_fisicos.bulkPut(b.tests_fisicos);
+      await db.lesiones.bulkPut(b.lesiones);
+      await db.config.bulkPut(b.config);
+    }
+  });
 }
