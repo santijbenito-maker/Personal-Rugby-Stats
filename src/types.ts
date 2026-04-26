@@ -39,6 +39,8 @@ export type Partido = {
   metrosGanados: number;
   quiebres: number;
   offloads: number;
+  knockOns: number;
+  usoPie: number;
   // Defensa
   tacklesEfectivos: number;
   tacklesFallados: number;

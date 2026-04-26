@@ -54,6 +54,8 @@ function partidoInicial(): Partido {
     metrosGanados: 0,
     quiebres: 0,
     offloads: 0,
+    knockOns: 0,
+    usoPie: 0,
     tacklesEfectivos: 0,
     tacklesFallados: 0,
     turnoversGanados: 0,
@@ -488,6 +490,10 @@ function PestañaAtaque({ p, set }: { p: Partido; set: Setter }) {
         <Counter label="Metros" valor={p.metrosGanados} onChange={(v) => set('metrosGanados', v)} max={500} paso={5} />
         <Counter label="Quiebres" valor={p.quiebres} onChange={(v) => set('quiebres', v)} />
         <Counter label="Offloads" valor={p.offloads} onChange={(v) => set('offloads', v)} />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <Counter label="Knock-ons" hint="❌" valor={p.knockOns} onChange={(v) => set('knockOns', v)} max={20} />
+        <Counter label="Uso del pie" hint="🦶" valor={p.usoPie} onChange={(v) => set('usoPie', v)} max={30} />
       </div>
     </div>
   );

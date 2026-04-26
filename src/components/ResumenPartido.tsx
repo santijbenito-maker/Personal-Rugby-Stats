@@ -67,7 +67,18 @@ export function ResumenPartido({ partido: p }: ResumenPartidoProps) {
       <ul className="text-sm space-y-1.5 border-t border-white/10 pt-3">
         <LineaResumen
           titulo="Ataque"
-          valor={`${p.tries} try${p.tries === 1 ? '' : 's'} · ${p.asistencias} asist · ${p.metrosGanados}m${pctPase !== null ? ` · pases ${p.pasesCompletados}/${p.pasesIntentados} = ${pctPase}%` : ''}`}
+          valor={
+            [
+              `${p.tries} try${p.tries === 1 ? '' : 's'}`,
+              `${p.asistencias} asist`,
+              `${p.metrosGanados}m`,
+              pctPase !== null ? `pases ${p.pasesCompletados}/${p.pasesIntentados} = ${pctPase}%` : null,
+              (p.knockOns ?? 0) > 0 ? `${p.knockOns} knock-on${p.knockOns === 1 ? '' : 's'}` : null,
+              (p.usoPie ?? 0) > 0 ? `pie ×${p.usoPie}` : null,
+            ]
+              .filter(Boolean)
+              .join(' · ')
+          }
         />
         <LineaResumen
           titulo="Defensa"
