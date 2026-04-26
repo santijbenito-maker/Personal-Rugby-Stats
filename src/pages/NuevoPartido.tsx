@@ -18,6 +18,7 @@ import { Segmented } from '../components/form/Segmented';
 import { Slider10 } from '../components/form/Slider10';
 import { Fraccion } from '../components/form/Fraccion';
 import { WeatherPicker } from '../components/form/WeatherPicker';
+import { Chip } from '../components/form/Chip';
 import {
   CampoTexto,
   CampoTextarea,
@@ -45,7 +46,7 @@ function partidoInicial(): Partido {
     clima: undefined,
     estadoCampo: 'Seco',
     temperatura: undefined,
-    posicion: '10 - Apertura',
+    posiciones: ['10 - Apertura'],
     minutos: 60,
     comoEntre: 'Titular',
     capitan: false,
@@ -133,6 +134,15 @@ export function NuevoPartido() {
         partidoExistente.tacklesIntentados ??
         (partidoExistente.tacklesEfectivos ?? 0) + (conFallados.tacklesFallados ?? 0);
 
+      // Si es un partido viejo con "posicion" (string única) en lugar del array,
+      // lo convertimos a array para que el form funcione.
+      const conPosicionVieja = partidoExistente as Partido & { posicion?: Posicion };
+      const posicionesNormalizadas: Posicion[] = Array.isArray(partidoExistente.posiciones)
+        ? partidoExistente.posiciones
+        : conPosicionVieja.posicion
+          ? [conPosicionVieja.posicion]
+          : ['10 - Apertura'];
+
       const normalizado: Partido = {
         ...defaults,
         ...partidoExistente,
@@ -141,6 +151,7 @@ export function NuevoPartido() {
         recepcionKicks: partidoExistente.recepcionKicks ?? 0,
         coberturas: partidoExistente.coberturas ?? 3,
         tacklesIntentados: intentadosCalculados,
+        posiciones: posicionesNormalizadas,
       };
       setP(normalizado);
       setCargado(true);
@@ -156,10 +167,26 @@ export function NuevoPartido() {
   const set = <K extends keyof Partido>(clave: K, v: Partido[K]) =>
     setP((prev) => ({ ...prev, [clave]: v, actualizadoEn: Date.now() }));
 
+  /** Toggle de una posición en el array de posiciones jugadas. */
+  const togglePosicion = (pos: Posicion) => {
+    setP((prev) => {
+      const ya = prev.posiciones.includes(pos);
+      const nuevas = ya
+        ? prev.posiciones.filter((x) => x !== pos)
+        : [...prev.posiciones, pos];
+      return { ...prev, posiciones: nuevas, actualizadoEn: Date.now() };
+    });
+  };
+
   const handleGuardar = async () => {
     if (p.rival.trim().length === 0) {
       setError('Poné el nombre del rival antes de guardar.');
       // scroll hacia arriba para que vea el mensaje
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    if (p.posiciones.length === 0) {
+      setError('Elegí al menos una posición que hayas jugado.');
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
@@ -287,15 +314,22 @@ export function NuevoPartido() {
 
       {/* 4. Mi participación */}
       <Seccion titulo="Mi participación">
-        <CampoPersonalizado label="Posición">
-          <Segmented<Posicion>
-            opciones={[
-              { valor: '9 - Medio scrum', label: '9 - Medio scrum' },
-              { valor: '10 - Apertura', label: '10 - Apertura' },
-            ]}
-            valor={p.posicion}
-            onChange={(v) => set('posicion', v)}
-          />
+        <CampoPersonalizado
+          label="Posiciones"
+          ayuda="Tocá una o las dos si jugaste de ambas en el mismo partido"
+        >
+          <div className="flex gap-2 flex-wrap">
+            <Chip
+              label="9 - Medio scrum"
+              activo={p.posiciones.includes('9 - Medio scrum')}
+              onToggle={() => togglePosicion('9 - Medio scrum')}
+            />
+            <Chip
+              label="10 - Apertura"
+              activo={p.posiciones.includes('10 - Apertura')}
+              onToggle={() => togglePosicion('10 - Apertura')}
+            />
+          </div>
         </CampoPersonalizado>
         <CampoTexto
           label="Minutos jugados"

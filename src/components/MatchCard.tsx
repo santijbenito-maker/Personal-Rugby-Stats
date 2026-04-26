@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import type { Partido } from '../types';
 import { ResultadoBadge, tipoResultado } from './ResultadoBadge';
 import { formatoCorto, hace } from '../lib/fechas';
+import { formatearPosiciones } from '../lib/calculos';
 
 type MatchCardProps = {
   partido: Partido;
@@ -38,7 +39,7 @@ export function MatchCard({ partido: p }: MatchCardProps) {
             vs {p.rival} <span className={['font-bold', colorScore].join(' ')}>· {p.puntosPropios}-{p.puntosRival}</span>
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            {p.posicion} · {p.minutos} min
+            {formatearPosiciones(p.posiciones)} · {p.minutos} min
             {p.capitan && ' · Capitán'}
           </p>
         </div>

@@ -1,6 +1,7 @@
 import type { Partido } from '../types';
 import { ResultadoBadge, tipoResultado } from './ResultadoBadge';
 import { formatoCorto } from '../lib/fechas';
+import { formatearPosiciones } from '../lib/calculos';
 
 type ResumenPartidoProps = {
   partido: Partido;
@@ -64,7 +65,7 @@ export function ResumenPartido({ partido: p }: ResumenPartidoProps) {
       {/* Meta */}
       <p className="text-xs text-amarillo-claro/80 mb-4">
         {p.clima && `${p.clima} · `}
-        {p.posicion} · {p.minutos} min {p.capitan ? '· Capitán' : `· ${p.comoEntre}`}
+        {formatearPosiciones(p.posiciones)} · {p.minutos} min {p.capitan ? '· Capitán' : `· ${p.comoEntre}`}
       </p>
 
       {/* Líneas de resumen */}

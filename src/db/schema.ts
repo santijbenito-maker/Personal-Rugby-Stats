@@ -134,6 +134,33 @@ class RugbyDB extends Dexie {
             if ('tacklesFallados' in p) delete p.tacklesFallados;
           });
       });
+
+    // Versión 6: posicion (string única) → posiciones (array). Permite cargar
+    // partidos donde se jugó 9 y 10 en simultáneo. Migramos arrancando con un
+    // array que tiene la posición vieja como único elemento.
+    this.version(6)
+      .stores({
+        partidos: 'id, fecha',
+        entrenamientos: 'id, fecha, asistencia',
+        gym_sesiones: 'id, fecha, foco',
+        gym_ejercicios: 'id, nombre, grupoMuscular, frecuenciaDeUso',
+        tests_fisicos: 'id, fecha',
+        lesiones: 'id, fecha, fechaAlta',
+        config: 'clave',
+        videos: 'id, partidoId, creadoEn',
+      })
+      .upgrade(async (tx) => {
+        type PartidoConPosicionVieja = Partial<Partido> & { posicion?: string };
+        await tx
+          .table('partidos')
+          .toCollection()
+          .modify((p: PartidoConPosicionVieja) => {
+            if (!Array.isArray(p.posiciones)) {
+              p.posiciones = p.posicion ? [p.posicion as Partido['posiciones'][number]] : ['10 - Apertura'];
+            }
+            if ('posicion' in p) delete p.posicion;
+          });
+      });
   }
 }
 

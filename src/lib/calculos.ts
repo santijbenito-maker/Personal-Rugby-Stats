@@ -1,4 +1,4 @@
-import type { Partido, Entrenamiento, GymSesion, GymEjercicio } from '../types';
+import type { Partido, Entrenamiento, GymSesion, GymEjercicio, Posicion } from '../types';
 import { diferenciaDias, hoyISO, inicioMes, inicioMesAnterior, finMesAnterior, restarDias } from './fechas';
 
 // ───────────────────────────────────────────────────────────────
@@ -47,6 +47,21 @@ export function metricaTackles(partidos: Partido[]): MetricaDelta {
   const actual = sum(partidos.filter((p) => esMesActual(p.fecha)));
   const anterior = sum(partidos.filter((p) => esMesAnterior(p.fecha)));
   return { valor: actual, delta: actual - anterior };
+}
+
+/**
+ * Formatea las posiciones jugadas en un partido para mostrar.
+ * - 1 posición: muestra el label completo, ej "10 - Apertura".
+ * - 2 posiciones: las une con una barra, ej "9 - Medio scrum / 10 - Apertura".
+ * - vacío: "—".
+ */
+export function formatearPosiciones(posiciones: Posicion[] | undefined): string {
+  if (!posiciones || posiciones.length === 0) return '—';
+  if (posiciones.length === 1) return posiciones[0];
+  // Orden estable: 9 antes que 10
+  return [...posiciones]
+    .sort((a, b) => (a < b ? -1 : 1))
+    .join(' / ');
 }
 
 /** Sesiones de entrenamiento del mes actual vs. mes anterior. */

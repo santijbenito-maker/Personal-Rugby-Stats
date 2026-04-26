@@ -27,7 +27,9 @@ export type Partido = {
   clima?: Clima;
   estadoCampo?: EstadoCampo;
   temperatura?: number;
-  posicion: Posicion;
+  /** Posiciones jugadas en el partido. Mín 1. Si jugó 9 y 10 en el mismo
+   *  partido se guardan ambas. */
+  posiciones: Posicion[];
   minutos: number;
   comoEntre: ComoEntre;
   capitan: boolean;
