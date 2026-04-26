@@ -24,6 +24,10 @@ export function ResumenPartido({ partido: p }: ResumenPartidoProps) {
     p.pasesIntentados > 0
       ? Math.round((p.pasesCompletados / p.pasesIntentados) * 100)
       : null;
+  const pctTackles =
+    p.tacklesIntentados > 0
+      ? Math.round((p.tacklesEfectivos / p.tacklesIntentados) * 100)
+      : null;
   const pctKicksPalo =
     p.kicksPaloIntentados > 0
       ? Math.round((p.kicksPaloConvertidos / p.kicksPaloIntentados) * 100)
@@ -84,8 +88,9 @@ export function ResumenPartido({ partido: p }: ResumenPartidoProps) {
           titulo="Defensa"
           valor={
             [
-              `${p.tacklesEfectivos} tackles efectivos`,
-              `${p.tacklesFallados} fallados`,
+              pctTackles !== null
+                ? `tackles ${p.tacklesEfectivos}/${p.tacklesIntentados} = ${pctTackles}%`
+                : `${p.tacklesEfectivos} tackles`,
               `${p.turnoversGanados} turnovers`,
               p.intercepciones > 0 ? `${p.intercepciones} intercep.` : null,
               (p.recepcionKicks ?? 0) > 0 ? `${p.recepcionKicks} recepciones` : null,

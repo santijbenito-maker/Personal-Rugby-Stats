@@ -59,7 +59,7 @@ function partidoInicial(): Partido {
     knockOns: 0,
     usoPie: 0,
     tacklesEfectivos: 0,
-    tacklesFallados: 0,
+    tacklesIntentados: 0,
     turnoversGanados: 0,
     intercepciones: 0,
     recepcionKicks: 0,
@@ -126,6 +126,13 @@ export function NuevoPartido() {
   useEffect(() => {
     if (esEdicion && partidoExistente && !cargado) {
       const defaults = partidoInicial();
+      // Si es un partido viejo que todavía tiene "tacklesFallados" en lugar
+      // de "tacklesIntentados", computamos los intentados como suma de los dos.
+      const conFallados = partidoExistente as Partido & { tacklesFallados?: number };
+      const intentadosCalculados =
+        partidoExistente.tacklesIntentados ??
+        (partidoExistente.tacklesEfectivos ?? 0) + (conFallados.tacklesFallados ?? 0);
+
       const normalizado: Partido = {
         ...defaults,
         ...partidoExistente,
@@ -133,6 +140,7 @@ export function NuevoPartido() {
         usoPie: partidoExistente.usoPie ?? 0,
         recepcionKicks: partidoExistente.recepcionKicks ?? 0,
         coberturas: partidoExistente.coberturas ?? 3,
+        tacklesIntentados: intentadosCalculados,
       };
       setP(normalizado);
       setCargado(true);
@@ -547,9 +555,17 @@ function PestañaAtaque({ p, set }: { p: Partido; set: Setter }) {
 function PestañaDefensa({ p, set }: { p: Partido; set: Setter }) {
   return (
     <div className="space-y-3">
+      <Fraccion
+        label="Tackles"
+        hint="🛡️"
+        etiquetaNumerador="completados"
+        etiquetaDenominador="intentados"
+        numerador={p.tacklesEfectivos}
+        denominador={p.tacklesIntentados}
+        onChangeNumerador={(v) => set('tacklesEfectivos', v)}
+        onChangeDenominador={(v) => set('tacklesIntentados', v)}
+      />
       <div className="grid grid-cols-2 gap-3">
-        <Counter label="Efectivos" hint="✅" valor={p.tacklesEfectivos} onChange={(v) => set('tacklesEfectivos', v)} />
-        <Counter label="Fallados" hint="❌" valor={p.tacklesFallados} onChange={(v) => set('tacklesFallados', v)} />
         <Counter label="Turnovers ganados" valor={p.turnoversGanados} onChange={(v) => set('turnoversGanados', v)} />
         <Counter label="Intercepciones" valor={p.intercepciones} onChange={(v) => set('intercepciones', v)} />
         <Counter

@@ -43,7 +43,7 @@ export type Partido = {
   usoPie: number;
   // Defensa
   tacklesEfectivos: number;
-  tacklesFallados: number;
+  tacklesIntentados: number;
   turnoversGanados: number;
   intercepciones: number;
   recepcionKicks: number;

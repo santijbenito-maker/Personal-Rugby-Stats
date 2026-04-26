@@ -103,6 +103,37 @@ class RugbyDB extends Dexie {
             if (typeof p.coberturas !== 'number') p.coberturas = 3;
           });
       });
+
+    // Versión 5: refactor de tackles. Antes guardábamos "efectivos + fallados";
+    // ahora "efectivos + intentados" (= efectivos + fallados, mismo dato pero
+    // expresado como X/Y). Computamos intentados desde lo que ya había:
+    // intentados = efectivos + fallados.
+    this.version(5)
+      .stores({
+        partidos: 'id, fecha',
+        entrenamientos: 'id, fecha, asistencia',
+        gym_sesiones: 'id, fecha, foco',
+        gym_ejercicios: 'id, nombre, grupoMuscular, frecuenciaDeUso',
+        tests_fisicos: 'id, fecha',
+        lesiones: 'id, fecha, fechaAlta',
+        config: 'clave',
+        videos: 'id, partidoId, creadoEn',
+      })
+      .upgrade(async (tx) => {
+        type PartidoConFallados = Partial<Partido> & { tacklesFallados?: number };
+        await tx
+          .table('partidos')
+          .toCollection()
+          .modify((p: PartidoConFallados) => {
+            if (typeof p.tacklesIntentados !== 'number') {
+              const efectivos = typeof p.tacklesEfectivos === 'number' ? p.tacklesEfectivos : 0;
+              const fallados = typeof p.tacklesFallados === 'number' ? p.tacklesFallados : 0;
+              p.tacklesIntentados = efectivos + fallados;
+            }
+            // Limpiamos el campo viejo para no dejar datos orphan en la base
+            if ('tacklesFallados' in p) delete p.tacklesFallados;
+          });
+      });
   }
 }
 
