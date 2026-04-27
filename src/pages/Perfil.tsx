@@ -7,6 +7,7 @@ import { Crest } from '../components/Crest';
 import { ImportarModal } from '../components/ImportarModal';
 import { BorrarConfirmacion } from '../components/BorrarConfirmacion';
 import { InstalarApp } from '../components/InstalarApp';
+import { SyncCard } from '../components/SyncCard';
 import { useToast } from '../components/Toaster';
 
 export function Perfil() {
@@ -97,6 +98,9 @@ export function Perfil() {
 
       {/* Instalar app (sólo si el navegador puede ofrecer el prompt) */}
       <InstalarApp />
+
+      {/* Sincronización entre dispositivos (Supabase) */}
+      <SyncCard />
 
       {/* Backup: Exportar / Importar */}
       <div className="bg-white dark:bg-slate-900 rounded-xl shadow-tarjeta border border-slate-200 dark:border-slate-800 p-5 space-y-3">
