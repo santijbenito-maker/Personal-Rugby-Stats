@@ -145,6 +145,10 @@ export function SyncCard() {
           >
             {enviando ? 'Enviando…' : '✉  Enviarme link de inicio de sesión'}
           </button>
+          <p className="text-[10px] text-slate-400 dark:text-slate-500 break-all">
+            Volverás a:{' '}
+            <code className="font-mono">{`${window.location.origin}${import.meta.env.BASE_URL}`}</code>
+          </p>
           {linkEnviado && (
             <p className="text-xs text-verde-record bg-verde-claro rounded-md px-3 py-2 border border-verde-record/20">
               ✓ Te mandamos un mail con el link. Abrilo desde este dispositivo y volvés logueado.
