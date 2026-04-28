@@ -27,9 +27,11 @@ export function SyncCard() {
     }
     setEnviando(true);
     try {
-      // Volvemos a la URL exacta de la app para que el link de mail traiga
-      // de vuelta acá (no al root de github.io).
-      const redirectTo = window.location.origin + window.location.pathname;
+      // Volvemos siempre al raíz de la app (BASE_URL = "/Personal-Rugby-Stats/"
+      // en producción, "/" en dev). Así la URL coincide exacto con la que está
+      // en el allow-list de Supabase, sin importar desde qué pantalla se haya
+      // tocado "Enviar link".
+      const redirectTo = `${window.location.origin}${import.meta.env.BASE_URL}`;
       await loginConEmail(email, redirectTo);
       setLinkEnviado(true);
       mostrar({
