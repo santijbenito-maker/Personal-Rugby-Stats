@@ -1,7 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSesion } from '../lib/useSesion';
 import { loginConEmail, cerrarSesion, subirAlServidor, bajarYReemplazar } from '../lib/sync';
 import { useToast } from './Toaster';
+
+// Espaciamos los pedidos de magic link para no chocar con el rate limit
+// de Supabase (~2 mails/hora en el plan free) y para evitar doble-clicks
+// accidentales. La marca se guarda en localStorage así sobrevive reloads.
+const COOLDOWN_SEGUNDOS = 60;
+const STORAGE_KEY_ULTIMO_ENVIO = 'sync:ultimoEnvioMagicLink';
 
 /**
  * Tarjeta de "Sincronización entre dispositivos" en la página Perfil.
@@ -19,12 +25,29 @@ export function SyncCard() {
   const [enviando, setEnviando] = useState(false);
   const [linkEnviado, setLinkEnviado] = useState(false);
   const [trabajando, setTrabajando] = useState<null | 'subir' | 'bajar' | 'salir'>(null);
+  const [segundosRestantes, setSegundosRestantes] = useState(0);
+
+  useEffect(() => {
+    const calcularRestante = () => {
+      const ultimo = Number(localStorage.getItem(STORAGE_KEY_ULTIMO_ENVIO) ?? 0);
+      const transcurrido = Math.floor((Date.now() - ultimo) / 1000);
+      return Math.max(0, COOLDOWN_SEGUNDOS - transcurrido);
+    };
+    setSegundosRestantes(calcularRestante());
+    const id = window.setInterval(() => {
+      const restante = calcularRestante();
+      setSegundosRestantes(restante);
+      if (restante === 0) window.clearInterval(id);
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [linkEnviado]);
 
   const handleEnviarLink = async () => {
     if (!email.includes('@')) {
       mostrar({ tipo: 'error', mensaje: 'Poné un mail válido.' });
       return;
     }
+    if (segundosRestantes > 0) return;
     setEnviando(true);
     try {
       // Volvemos siempre al raíz de la app (BASE_URL = "/Personal-Rugby-Stats/"
@@ -33,6 +56,7 @@ export function SyncCard() {
       // tocado "Enviar link".
       const redirectTo = `${window.location.origin}${import.meta.env.BASE_URL}`;
       await loginConEmail(email, redirectTo);
+      localStorage.setItem(STORAGE_KEY_ULTIMO_ENVIO, String(Date.now()));
       setLinkEnviado(true);
       mostrar({
         tipo: 'exito',
@@ -140,10 +164,14 @@ export function SyncCard() {
           <button
             type="button"
             onClick={handleEnviarLink}
-            disabled={enviando || email.length === 0}
+            disabled={enviando || email.length === 0 || segundosRestantes > 0}
             className="w-full bg-azul-principal hover:bg-azul-oscuro text-white font-semibold rounded-lg px-4 py-2.5 text-sm transition disabled:opacity-50"
           >
-            {enviando ? 'Enviando…' : '✉  Enviarme link de inicio de sesión'}
+            {enviando
+              ? 'Enviando…'
+              : segundosRestantes > 0
+                ? `Esperá ${segundosRestantes}s para pedir otro link`
+                : '✉  Enviarme link de inicio de sesión'}
           </button>
           <p className="text-[10px] text-slate-400 dark:text-slate-500 break-all">
             Volverás a:{' '}
