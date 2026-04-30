@@ -69,6 +69,7 @@ export function SelectorEjercicio({
               esPersonalizado: true,
               frecuenciaDeUso: 0,
               creadoEn: Date.now(),
+              actualizadoEn: Date.now(),
             };
             await db.gym_ejercicios.add(nuevo);
             setCreando(false);

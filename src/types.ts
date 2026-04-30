@@ -133,6 +133,7 @@ export type GymEjercicio = {
   esPersonalizado: boolean;
   frecuenciaDeUso: number;
   creadoEn: number;
+  actualizadoEn: number;
 };
 
 export type Serie = {
