@@ -9,6 +9,37 @@ import type {
   Config,
   VideoPartido,
 } from '../types';
+import { estoyAplicandoRemoto } from '../lib/syncFlag';
+
+/**
+ * Tombstone: marca de borrado para que la sincronización propague deletes
+ * a otros dispositivos. PK compuesta (kind, id).
+ */
+export type Tombstone = {
+  kind: string;
+  id: string;
+  deletedAt: number;
+};
+
+/**
+ * Mapeo tabla local → "kind" usado por la sincronización en Supabase.
+ * Las tablas que NO están acá no se sincronizan (videos: muy pesados; tombstones: meta).
+ */
+export const TIPOS_SINCRONIZADOS = {
+  partidos: 'partido',
+  entrenamientos: 'entrenamiento',
+  gym_sesiones: 'gym_sesion',
+  gym_ejercicios: 'gym_ejercicio',
+  tests_fisicos: 'test_fisico',
+  lesiones: 'lesion',
+  config: 'config',
+} as const;
+
+export type TablaSync = keyof typeof TIPOS_SINCRONIZADOS;
+export type Kind = (typeof TIPOS_SINCRONIZADOS)[TablaSync];
+
+/** Evento custom que disparamos cuando hay un cambio local: dispara el push. */
+export const EVENTO_CAMBIO_LOCAL = 'rugby-stats:cambio-local';
 
 /**
  * Base de datos local IndexedDB de la app.
@@ -25,6 +56,7 @@ class RugbyDB extends Dexie {
   lesiones!: Table<Lesion, string>;
   config!: Table<Config, string>;
   videos!: Table<VideoPartido, string>;
+  tombstones!: Table<Tombstone, [string, string]>;
 
   constructor() {
     super('RugbyStatsSB');
@@ -161,10 +193,126 @@ class RugbyDB extends Dexie {
             if ('posicion' in p) delete p.posicion;
           });
       });
+
+    // Versión 7: agrega la tabla "tombstones" (marcas de borrado para que la
+    // sincronización propague deletes entre dispositivos), e indexa
+    // "actualizadoEn" en cada tabla sincronizada para poder hacer queries
+    // tipo "traeme todo lo que cambió desde X". Backfill de actualizadoEn
+    // donde no existía (gym_ejercicios y registros muy viejos).
+    this.version(7)
+      .stores({
+        partidos: 'id, fecha, actualizadoEn',
+        entrenamientos: 'id, fecha, asistencia, actualizadoEn',
+        gym_sesiones: 'id, fecha, foco, actualizadoEn',
+        gym_ejercicios: 'id, nombre, grupoMuscular, frecuenciaDeUso, actualizadoEn',
+        tests_fisicos: 'id, fecha, actualizadoEn',
+        lesiones: 'id, fecha, fechaAlta, actualizadoEn',
+        config: 'clave, actualizadoEn',
+        videos: 'id, partidoId, creadoEn',
+        tombstones: '[kind+id], deletedAt',
+      })
+      .upgrade(async (tx) => {
+        const ahora = Date.now();
+        const tablas = [
+          'partidos',
+          'entrenamientos',
+          'gym_sesiones',
+          'gym_ejercicios',
+          'tests_fisicos',
+          'lesiones',
+          'config',
+        ] as const;
+        for (const t of tablas) {
+          await tx
+            .table(t)
+            .toCollection()
+            .modify((r: { creadoEn?: number; actualizadoEn?: number }) => {
+              if (typeof r.actualizadoEn !== 'number') {
+                r.actualizadoEn = typeof r.creadoEn === 'number' ? r.creadoEn : ahora;
+              }
+            });
+        }
+      });
   }
 }
 
 export const db = new RugbyDB();
+
+// ───────────────────────────────────────────────────────────────
+// Hooks de sincronización
+// ───────────────────────────────────────────────────────────────
+//
+// Cada vez que se crea, modifica o borra un registro de las tablas
+// sincronizadas, hacemos dos cosas:
+//   1. Auto-stamp del campo "actualizadoEn" (así el motor de sync siempre
+//      tiene un timestamp coherente, sin depender de que cada lugar de
+//      escritura se acuerde de setearlo).
+//   2. Disparamos un evento custom para que el motor de sync agende un push
+//      con debounce (sin que cada sitio de escritura tenga que llamar a
+//      "sincronizar" a mano).
+//
+// En el caso de delete: además de avisar, escribimos un tombstone para que
+// el otro dispositivo se entere del borrado.
+
+function notificarCambioLocal() {
+  if (typeof window === 'undefined') return;
+  if (estoyAplicandoRemoto()) return;
+  // Microtask: dejamos que la transacción de Dexie commit antes de disparar
+  // el evento, así el listener (sync engine) lee la base ya consistente.
+  queueMicrotask(() => window.dispatchEvent(new Event(EVENTO_CAMBIO_LOCAL)));
+}
+
+for (const tabla of Object.keys(TIPOS_SINCRONIZADOS) as TablaSync[]) {
+  // Cast a Table<any> porque el callback de cada hook tiene firma distinta
+  // y los overloads de Dexie no se resuelven bien al iterar por tabla.
+  const t = db.table(tabla) as Table<Record<string, unknown>, string>;
+  const kind = TIPOS_SINCRONIZADOS[tabla];
+
+  t.hook('creating', (_pk, obj) => {
+    // Si estamos aplicando un cambio remoto, respetamos el actualizadoEn que
+    // ya viene en el objeto (es el timestamp del server). Si es un cambio
+    // local, lo seteamos al ahora.
+    if (!estoyAplicandoRemoto() || typeof obj.actualizadoEn !== 'number') {
+      obj.actualizadoEn = Date.now();
+    }
+    notificarCambioLocal();
+  });
+
+  t.hook('updating', (mods, _pk, obj) => {
+    notificarCambioLocal();
+    if (estoyAplicandoRemoto()) {
+      // El motor de sync ya está poniendo el actualizadoEn correcto (del
+      // server). No bumpear sobre eso, sino el cambio remoto se ve como
+      // local y dispara un loop.
+      return mods;
+    }
+    // Si el caller explícitamente puso actualizadoEn en mods, lo respetamos
+    // (caso raro: import de backup). Sino, ahora.
+    const yaTieneTs = (mods as Record<string, unknown>).actualizadoEn !== undefined;
+    return yaTieneTs ? mods : { ...mods, actualizadoEn: Date.now() };
+    // _pk y obj no se usan, el cast de tipos ya está cubierto arriba
+    void _pk;
+    void obj;
+  });
+
+  t.hook('deleting', (pk) => {
+    if (estoyAplicandoRemoto()) {
+      // El delete fue pedido por el motor de sync al aplicar un tombstone
+      // remoto. El motor ya está escribiendo el tombstone con el ts correcto.
+      return;
+    }
+    const id = String(pk);
+    // Disparamos en paralelo (fuera de la transacción actual) para no
+    // forzar que cada delete tenga que abrir una tx con tombstones en su
+    // alcance. Si el navegador se cierra entre el delete y el tombstone
+    // (microsegundos) hay un mini-window donde el borrado podría no
+    // propagarse — aceptable para una app personal.
+    Promise.resolve().then(() =>
+      db.tombstones.put({ kind, id, deletedAt: Date.now() }).catch(() => {}),
+    );
+    notificarCambioLocal();
+  });
+}
 
 /**
  * Vacía todas las tablas y vuelve a sembrar la biblioteca de ejercicios

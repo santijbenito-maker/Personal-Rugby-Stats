@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useSesion } from '../lib/useSesion';
-import { loginConEmail, cerrarSesion, subirAlServidor, bajarYReemplazar } from '../lib/sync';
+import {
+  loginConEmail,
+  cerrarSesion,
+  forzarSync,
+  resyncCompletoDesdeCero,
+} from '../lib/sync';
 import { useToast } from './Toaster';
+import { SyncStatus } from './SyncStatus';
 
 // Espaciamos los pedidos de magic link para no chocar con el rate limit
 // de Supabase (~2 mails/hora en el plan free) y para evitar doble-clicks
@@ -11,11 +17,14 @@ const STORAGE_KEY_ULTIMO_ENVIO = 'sync:ultimoEnvioMagicLink';
 
 /**
  * Tarjeta de "Sincronización entre dispositivos" en la página Perfil.
- * - Si no estás logueado: form de mail + botón "Enviar link".
- * - Si estás logueado: botones manuales "Subir ahora" y "Bajar y reemplazar".
  *
- * El sync NO incluye videos (son grandes y locales al dispositivo) — usa el
- * mismo formato JSON que el export/import a archivo.
+ * Funcionamiento (post auto-sync):
+ *  - Si no estás logueado: form de mail + botón "Enviar link".
+ *  - Si estás logueado: indicador del estado de sync + sección colapsable
+ *    "Modo avanzado" con los botones manuales de "forzar sync" y
+ *    "resync completo desde cero".
+ *
+ * El sync NO incluye videos (son grandes y locales al dispositivo).
  */
 export function SyncCard() {
   const { usuario, cargando } = useSesion();
@@ -24,8 +33,9 @@ export function SyncCard() {
   const [email, setEmail] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [linkEnviado, setLinkEnviado] = useState(false);
-  const [trabajando, setTrabajando] = useState<null | 'subir' | 'bajar' | 'salir'>(null);
+  const [trabajando, setTrabajando] = useState<null | 'forzar' | 'resync' | 'salir'>(null);
   const [segundosRestantes, setSegundosRestantes] = useState(0);
+  const [avanzadoAbierto, setAvanzadoAbierto] = useState(false);
 
   useEffect(() => {
     const calcularRestante = () => {
@@ -50,10 +60,6 @@ export function SyncCard() {
     if (segundosRestantes > 0) return;
     setEnviando(true);
     try {
-      // Volvemos siempre al raíz de la app (BASE_URL = "/Personal-Rugby-Stats/"
-      // en producción, "/" en dev). Así la URL coincide exacto con la que está
-      // en el allow-list de Supabase, sin importar desde qué pantalla se haya
-      // tocado "Enviar link".
       const redirectTo = `${window.location.origin}${import.meta.env.BASE_URL}`;
       await loginConEmail(email, redirectTo);
       localStorage.setItem(STORAGE_KEY_ULTIMO_ENVIO, String(Date.now()));
@@ -73,42 +79,36 @@ export function SyncCard() {
     }
   };
 
-  const handleSubir = async () => {
-    setTrabajando('subir');
+  const handleForzar = async () => {
+    setTrabajando('forzar');
     try {
-      const { actualizadoEn } = await subirAlServidor();
-      mostrar({
-        tipo: 'exito',
-        mensaje: `Datos subidos al servidor. Hora: ${formatearHora(actualizadoEn)}`,
-      });
+      await forzarSync();
+      mostrar({ tipo: 'exito', mensaje: 'Sincronizado.' });
     } catch (err) {
       mostrar({
         tipo: 'error',
-        mensaje: err instanceof Error ? err.message : 'Falló la subida',
+        mensaje: err instanceof Error ? err.message : 'Falló la sincronización',
       });
     } finally {
       setTrabajando(null);
     }
   };
 
-  const handleBajar = async () => {
+  const handleResync = async () => {
     if (
       !confirm(
-        '¿Reemplazar los datos de este dispositivo con los del servidor? Vas a perder cambios locales que no hayas subido.',
+        '¿Resincronizar todo desde cero? No se pierden datos: solo se vuelve a comparar todo con el servidor. Puede tardar unos segundos.',
       )
     )
       return;
-    setTrabajando('bajar');
+    setTrabajando('resync');
     try {
-      const { actualizadoEn } = await bajarYReemplazar();
-      mostrar({
-        tipo: 'exito',
-        mensaje: `Datos bajados. Última subida: ${formatearHora(actualizadoEn)}`,
-      });
+      await resyncCompletoDesdeCero();
+      mostrar({ tipo: 'exito', mensaje: 'Resync completo OK.' });
     } catch (err) {
       mostrar({
         tipo: 'error',
-        mensaje: err instanceof Error ? err.message : 'Falló la bajada',
+        mensaje: err instanceof Error ? err.message : 'Falló el resync',
       });
     } finally {
       setTrabajando(null);
@@ -143,7 +143,8 @@ export function SyncCard() {
           Sincronización entre dispositivos
         </h2>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-          Subí tus datos a un servidor y bajalos en otro dispositivo. Los videos no se sincronizan
+          Tus partidos, entrenos, gym, tests y lesiones se sincronizan solos entre todos los
+          dispositivos donde inicies sesión con el mismo mail. Los videos no se sincronizan
           (siguen siendo locales).
         </p>
       </div>
@@ -186,36 +187,53 @@ export function SyncCard() {
         </div>
       ) : (
         <div className="space-y-3">
-          <div className="bg-verde-claro border border-verde-record/20 rounded-md px-3 py-2 text-sm">
-            <p className="font-semibold text-verde-record">✓ Conectado</p>
+          <div className="bg-verde-claro border border-verde-record/20 rounded-md px-3 py-2">
+            <p className="font-semibold text-verde-record text-sm">✓ Conectado</p>
             <p className="text-xs text-slate-700 dark:text-slate-200 truncate">{usuario.email}</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={handleSubir}
-              disabled={trabajando !== null}
-              className="bg-amarillo-acento hover:brightness-95 text-azul-oscuro font-semibold rounded-lg px-4 py-2.5 text-sm transition disabled:opacity-50"
-            >
-              {trabajando === 'subir' ? 'Subiendo…' : '⬆ Subir ahora'}
-            </button>
-            <button
-              type="button"
-              onClick={handleBajar}
-              disabled={trabajando !== null}
-              className="bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold rounded-lg px-4 py-2.5 text-sm transition disabled:opacity-50"
-            >
-              {trabajando === 'bajar' ? 'Bajando…' : '⬇ Bajar y reemplazar'}
-            </button>
+          <div className="rounded-md border border-slate-200 dark:border-slate-800 px-3 py-2">
+            <SyncStatus />
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 leading-snug">
+              La sincronización es automática: cada cambio se sube solo a los pocos segundos, y
+              si otro dispositivo modifica algo te llega al toque. No tenés que tocar nada.
+            </p>
           </div>
 
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
-            <strong>Subir</strong>: este dispositivo manda sus datos al servidor.{' '}
-            <strong>Bajar</strong>: el servidor sobrescribe los datos de este dispositivo. Como
-            sólo sos vos, lo más simple es: cargás siempre desde el celu, subís cuando termina el
-            partido, y desde la compu bajás antes de revisar.
-          </p>
+          <button
+            type="button"
+            onClick={() => setAvanzadoAbierto((v) => !v)}
+            className="w-full text-left text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition py-1 flex items-center gap-1"
+          >
+            <span className="text-[10px]">{avanzadoAbierto ? '▼' : '▶'}</span>
+            <span>Modo avanzado</span>
+          </button>
+
+          {avanzadoAbierto && (
+            <div className="space-y-2 border-t border-slate-200 dark:border-slate-800 pt-3">
+              <button
+                type="button"
+                onClick={handleForzar}
+                disabled={trabajando !== null}
+                className="w-full bg-amarillo-acento hover:brightness-95 text-azul-oscuro font-semibold rounded-lg px-4 py-2 text-sm transition disabled:opacity-50"
+              >
+                {trabajando === 'forzar' ? 'Sincronizando…' : '↻  Forzar sincronización ahora'}
+              </button>
+              <button
+                type="button"
+                onClick={handleResync}
+                disabled={trabajando !== null}
+                className="w-full bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold rounded-lg px-4 py-2 text-sm transition disabled:opacity-50"
+              >
+                {trabajando === 'resync' ? 'Resincronizando…' : '⟳  Resync completo desde cero'}
+              </button>
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 leading-snug">
+                <strong>Forzar</strong>: corre el ciclo de sync ya, sin esperar al debounce.{' '}
+                <strong>Resync completo</strong>: olvida los marcadores internos y vuelve a
+                comparar todo con el servidor (no borra nada).
+              </p>
+            </div>
+          )}
 
           <button
             type="button"
@@ -229,13 +247,4 @@ export function SyncCard() {
       )}
     </div>
   );
-}
-
-function formatearHora(iso: string): string {
-  return new Date(iso).toLocaleString('es-AR', {
-    day: '2-digit',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
 }

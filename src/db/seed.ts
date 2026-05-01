@@ -30,6 +30,7 @@ export async function sembrarBibliotecaEjercicios() {
     esPersonalizado: false,
     frecuenciaDeUso: 0,
     creadoEn: now(),
+    actualizadoEn: now(),
   }));
 
   await db.gym_ejercicios.bulkAdd(ejercicios);

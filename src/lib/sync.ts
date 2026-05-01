@@ -1,26 +1,12 @@
 import { supabase } from './supabase';
-import { exportarTodo, importarBackup, validarBackup } from './export';
-import type { Backup } from './export';
+import { syncCompleto, resetearCursores } from './syncEngine';
 
 /**
- * Sincronización entre dispositivos vía Supabase.
- *
- * Reusa el formato Backup ya existente (lib/export.ts): subimos un blob JSON
- * con todo el estado al servidor (tabla app_state), y al bajar lo importamos
- * con modo "reemplazar". Los videos NO se sincronizan (igual que en el backup
- * a archivo) porque son grandes y locales al dispositivo.
- *
- * Conflicto: la última escritura gana. Como Santi es el único usuario y rara
- * vez edita en dos lados al mismo tiempo, esto alcanza. Si quisiéramos conflict
- * resolution más fino habría que sincronizar tabla por tabla.
+ * Helpers de autenticación. La sincronización de datos en sí vive en
+ * lib/syncEngine.ts (motor per-record con merge inteligente). Este módulo
+ * sólo se encarga del login/logout y de exponer wrappers manuales para el
+ * "modo avanzado" de la UI.
  */
-
-const TABLA = 'app_state';
-
-export type EstadoServidor = {
-  data: Backup;
-  actualizadoEn: string; // ISO datetime del server
-};
 
 /** Devuelve el usuario logueado o null. */
 export async function getUsuario() {
@@ -51,53 +37,23 @@ export async function cerrarSesion() {
 }
 
 /**
- * Sube todo el estado local al servidor. Reemplaza la fila del usuario con
- * lo que está en IndexedDB ahora.
+ * Fuerza un ciclo de sincronización ahora mismo, en vez de esperar al
+ * debounce/intervalo del auto-sync. Útil si el usuario quiere ver al toque
+ * los cambios de otro dispositivo.
  */
-export async function subirAlServidor(): Promise<{ actualizadoEn: string }> {
-  const usuario = await getUsuario();
-  if (!usuario) throw new Error('No estás logueado.');
-
-  const backup = await exportarTodo();
-  const ahora = new Date().toISOString();
-  const fila = {
-    user_id: usuario.id,
-    data: backup,
-    updated_at: ahora,
-  };
-
-  const { error } = await supabase.from(TABLA).upsert(fila, { onConflict: 'user_id' });
-  if (error) throw error;
-  return { actualizadoEn: ahora };
+export async function forzarSync() {
+  await syncCompleto();
 }
 
 /**
- * Baja el estado del servidor.
- * Devuelve null si nunca hubo nada subido.
+ * Botón rojo: reinicia los cursores de pull/push y vuelve a sincronizar
+ * todo desde cero. Se usa si el usuario sospecha que algo quedó desincronizado
+ * o después de importar un backup local que no se reflejó.
+ *
+ * No es destructivo (no borra datos): simplemente fuerza al motor a comparar
+ * tabla por tabla con el servidor y subir/bajar lo que corresponda.
  */
-export async function leerDelServidor(): Promise<EstadoServidor | null> {
-  const usuario = await getUsuario();
-  if (!usuario) throw new Error('No estás logueado.');
-
-  const { data, error } = await supabase
-    .from(TABLA)
-    .select('data, updated_at')
-    .eq('user_id', usuario.id)
-    .maybeSingle();
-  if (error) throw error;
-  if (!data) return null;
-
-  validarBackup(data.data);
-  return { data: data.data, actualizadoEn: data.updated_at };
-}
-
-/**
- * Reemplaza el estado local con el del servidor.
- * Tira error si el servidor está vacío.
- */
-export async function bajarYReemplazar(): Promise<{ actualizadoEn: string }> {
-  const remoto = await leerDelServidor();
-  if (!remoto) throw new Error('Todavía no subiste datos al servidor desde ningún dispositivo.');
-  await importarBackup(remoto.data, 'reemplazar');
-  return { actualizadoEn: remoto.actualizadoEn };
+export async function resyncCompletoDesdeCero() {
+  resetearCursores();
+  await syncCompleto();
 }
