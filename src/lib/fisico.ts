@@ -53,17 +53,25 @@ export function seriePeso(tests: TestFisico[]): PuntoPesoCorporal[] {
 // Lesiones
 // ───────────────────────────────────────────────────────────────
 
-/** Está activa si no tiene fecha de alta. */
+/**
+ * Está activa si no tiene fecha de alta, o si la fecha de alta está en el
+ * futuro (la lesión todavía está en curso, recién está estimada).
+ * Si la fecha de alta es hoy o pasada, la lesión ya está cerrada.
+ */
 export function esActiva(lesion: Lesion): boolean {
-  return !lesion.fechaAlta;
+  if (!lesion.fechaAlta) return true;
+  return lesion.fechaAlta > hoyISO();
 }
 
 /**
  * Cuántos días perdidos efectivos ha tenido la lesión.
- * Si está activa: desde la fecha hasta hoy. Si está recuperada: fecha → alta.
+ * Si está activa: desde la fecha hasta hoy (no proyectamos al futuro).
+ * Si está recuperada: fecha → alta (alta real, ya pasada).
  */
 export function diasPerdidos(lesion: Lesion): number {
-  const fin = lesion.fechaAlta ?? hoyISO();
+  const hoy = hoyISO();
+  const activa = esActiva(lesion);
+  const fin = activa ? hoy : (lesion.fechaAlta ?? hoy);
   return Math.max(0, diferenciaDias(lesion.fecha, fin));
 }
 

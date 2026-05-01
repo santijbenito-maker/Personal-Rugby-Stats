@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { db } from '../db/schema';
-import { hoyISO } from '../lib/fechas';
+import { hoyISO, sumarDias } from '../lib/fechas';
 import type {
   Lesion,
   ZonaLesion,
@@ -36,6 +36,9 @@ const ZONAS: { valor: ZonaLesion; label: string }[] = [
 
 function lesionInicial(): Lesion {
   const t = Date.now();
+  // Pre-llenamos fechaAlta con hoy + 7 días (default de diasEstimados) para
+  // que arranque "Activa" con una fecha estimada plausible. El usuario la
+  // ajusta a la fecha real (pasada/presente/futura) antes de guardar.
   return {
     id: crypto.randomUUID(),
     fecha: hoyISO(),
@@ -44,7 +47,7 @@ function lesionInicial(): Lesion {
     tipo: 'Muscular',
     gravedad: 'Leve',
     diasEstimados: 7,
-    fechaAlta: undefined,
+    fechaAlta: sumarDias(hoyISO(), 7),
     tratamiento: '',
     notas: '',
     creadoEn: t,
@@ -62,30 +65,41 @@ export function NuevaLesion() {
   const set = <K extends keyof Lesion>(clave: K, v: Lesion[K]) =>
     setL((prev) => ({ ...prev, [clave]: v, actualizadoEn: Date.now() }));
 
-  // El "estado" es derivado de si la lesión tiene fechaAlta o no.
-  // - Activa = todavía estás recuperándote, fechaAlta vacío
-  // - Recuperada = ya estás bien, con fecha de alta cargada
-  // El toggle permite registrar lesiones del pasado ya cerradas con la
-  // misma vista que las activas.
-  const estado: 'activa' | 'recuperada' = l.fechaAlta ? 'recuperada' : 'activa';
+  // El "estado" se deriva comparando la fecha de alta con hoy:
+  //   - Si fechaAlta está en el futuro (o vacío) -> Activa (estimada)
+  //   - Si fechaAlta es hoy o pasado            -> Recuperada
+  // Esto permite usar el mismo campo "Fecha de alta" en los dos casos:
+  // como fecha estimada de regreso (lesión activa) o como fecha real de
+  // recuperación (lesión cerrada / pasada).
+  const hoy = hoyISO();
+  const estado: 'activa' | 'recuperada' =
+    l.fechaAlta && l.fechaAlta <= hoy ? 'recuperada' : 'activa';
 
   const cambiarEstado = (nuevo: 'activa' | 'recuperada') => {
     if (nuevo === estado) return;
     if (nuevo === 'recuperada') {
-      // Pre-llenamos fechaAlta con hoy. El usuario la ajusta a la fecha real.
-      set('fechaAlta', hoyISO());
+      // Recuperada -> fecha de alta hoy (o ajustar a una pasada).
+      set('fechaAlta', hoy);
     } else {
-      set('fechaAlta', undefined);
+      // Activa -> fecha estimada en el futuro (hoy + diasEstimados, o
+      // mañana mínimo). El usuario después la afina a mano.
+      const dias = Math.max(1, l.diasEstimados || 7);
+      const futura = sumarDias(hoy, dias);
+      set('fechaAlta', futura);
     }
   };
 
   const handleGuardar = async () => {
-    if (estado === 'recuperada' && !l.fechaAlta) {
-      setError('Si marcaste la lesión como Recuperada, cargá la fecha de alta.');
+    if (!l.fechaAlta) {
+      setError(
+        estado === 'recuperada'
+          ? 'Cargá la fecha de alta (cuándo te recuperaste).'
+          : 'Cargá la fecha estimada de alta (cuándo pensás volver).',
+      );
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
-    if (l.fechaAlta && l.fechaAlta < l.fecha) {
+    if (l.fechaAlta < l.fecha) {
       setError('La fecha de alta no puede ser anterior a la fecha de la lesión.');
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
@@ -207,16 +221,18 @@ export function NuevaLesion() {
           value={l.diasEstimados}
           onChange={(ev) => set('diasEstimados', Math.max(0, Number(ev.target.value) || 0))}
         />
-        {estado === 'recuperada' && (
-          <CampoTexto
-            label="Fecha de alta"
-            hint="✅"
-            type="date"
-            value={l.fechaAlta ?? ''}
-            onChange={(ev) => set('fechaAlta', ev.target.value || undefined)}
-            ayuda="Cuándo volviste a estar bien (no puede ser anterior a la fecha de la lesión)"
-          />
-        )}
+        <CampoTexto
+          label={estado === 'recuperada' ? 'Fecha de alta' : 'Fecha estimada de alta'}
+          hint="✅"
+          type="date"
+          value={l.fechaAlta ?? ''}
+          onChange={(ev) => set('fechaAlta', ev.target.value || undefined)}
+          ayuda={
+            estado === 'recuperada'
+              ? 'Cuándo volviste a estar bien'
+              : 'Cuándo pensás volver a jugar (podés afinarla cuando te recuperes)'
+          }
+        />
       </Seccion>
 
       <Seccion titulo="Tratamiento y notas">

@@ -31,6 +31,10 @@ export function restarDias(iso: string, dias: number): string {
   return formatearISO(d);
 }
 
+export function sumarDias(iso: string, dias: number): string {
+  return restarDias(iso, -dias);
+}
+
 /** Diferencia en días entre dos fechas ISO (b - a). */
 export function diferenciaDias(a: string, b: string): number {
   const msDia = 86_400_000;
