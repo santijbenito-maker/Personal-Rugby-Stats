@@ -295,10 +295,33 @@ class RugbyDB extends Dexie {
           .table('partidos')
           .toCollection()
           .modify((p: PartidoConCamposViejos) => {
-            if (typeof p.romperLaLinea !== 'number') p.romperLaLinea = 0;
             if ('pasesCompletados' in p) delete p.pasesCompletados;
             if ('pasesIntentados' in p) delete p.pasesIntentados;
             if ('metrosGanados' in p) delete p.metrosGanados;
+          });
+      });
+
+    // Versión 10: revert de "romperLaLinea" agregado en v9. Resultó redundante
+    // con "quiebres" — quitamos el campo de los registros guardados.
+    this.version(10)
+      .stores({
+        partidos: 'id, fecha, actualizadoEn',
+        entrenamientos: 'id, fecha, asistencia, actualizadoEn',
+        gym_sesiones: 'id, fecha, foco, actualizadoEn',
+        gym_ejercicios: 'id, nombre, grupoMuscular, frecuenciaDeUso, actualizadoEn',
+        tests_fisicos: 'id, fecha, actualizadoEn',
+        lesiones: 'id, fecha, fechaAlta, actualizadoEn',
+        config: 'clave, actualizadoEn',
+        videos: 'id, partidoId, creadoEn',
+        tombstones: '[kind+id], deletedAt',
+      })
+      .upgrade(async (tx) => {
+        type PartidoConRomperLinea = Partial<Partido> & { romperLaLinea?: number };
+        await tx
+          .table('partidos')
+          .toCollection()
+          .modify((p: PartidoConRomperLinea) => {
+            if ('romperLaLinea' in p) delete p.romperLaLinea;
           });
       });
   }

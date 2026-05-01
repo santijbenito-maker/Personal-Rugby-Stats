@@ -54,7 +54,7 @@ export function MatchCard({ partido: p }: MatchCardProps) {
           valor={p.kicksPaloIntentados > 0 ? `${p.kicksPaloConvertidos}/${p.kicksPaloIntentados}` : '—'}
           color="azul"
         />
-        <StatMini label="Rompe línea" valor={p.romperLaLinea ?? 0} color="amarillo" />
+        <StatMini label="Quiebres" valor={p.quiebres} color="amarillo" />
         <StatMini label="Minutos" valor={p.minutos} color="azul" />
       </div>
     </Link>
