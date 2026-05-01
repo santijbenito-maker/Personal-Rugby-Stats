@@ -52,9 +52,7 @@ function partidoInicial(): Partido {
     capitan: false,
     tries: 0,
     asistencias: 0,
-    pasesCompletados: 0,
-    pasesIntentados: 0,
-    metrosGanados: 0,
+    romperLaLinea: 0,
     quiebres: 0,
     offloads: 0,
     knockOns: 0,
@@ -152,6 +150,8 @@ export function NuevoPartido() {
         coberturas: partidoExistente.coberturas ?? 3,
         tacklesIntentados: intentadosCalculados,
         posiciones: posicionesNormalizadas,
+        // Campo nuevo en v9 — partidos cargados antes no lo tenían.
+        romperLaLinea: partidoExistente.romperLaLinea ?? 0,
       };
       setP(normalizado);
       setCargado(true);
@@ -563,18 +563,13 @@ function PestañaAtaque({ p, set }: { p: Partido; set: Setter }) {
         <Counter label="Tries" hint="🏉" valor={p.tries} onChange={(v) => set('tries', v)} />
         <Counter label="Asistencias" valor={p.asistencias} onChange={(v) => set('asistencias', v)} />
       </div>
-      <Fraccion
-        label="Pases"
-        hint="👐"
-        etiquetaNumerador="completados"
-        etiquetaDenominador="intentados"
-        numerador={p.pasesCompletados}
-        denominador={p.pasesIntentados}
-        onChangeNumerador={(v) => set('pasesCompletados', v)}
-        onChangeDenominador={(v) => set('pasesIntentados', v)}
-      />
       <div className="grid grid-cols-3 gap-3">
-        <Counter label="Metros" valor={p.metrosGanados} onChange={(v) => set('metrosGanados', v)} max={500} paso={5} />
+        <Counter
+          label="Romper la línea"
+          valor={p.romperLaLinea}
+          onChange={(v) => set('romperLaLinea', v)}
+          max={50}
+        />
         <Counter label="Quiebres" valor={p.quiebres} onChange={(v) => set('quiebres', v)} />
         <Counter label="Offloads" valor={p.offloads} onChange={(v) => set('offloads', v)} />
       </div>
