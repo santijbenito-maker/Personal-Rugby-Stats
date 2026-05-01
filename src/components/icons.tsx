@@ -158,6 +158,14 @@ export function IconoFrio({ size = 24, className, strokeWidth = 2 }: IconProps) 
   );
 }
 
+export function IconoLuna({ size = 24, className, strokeWidth = 2 }: IconProps) {
+  return (
+    <svg {...base(size, className)} strokeWidth={strokeWidth} aria-hidden>
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
+    </svg>
+  );
+}
+
 // Cerrar (X) — para remover items
 export function IconoCerrar({ size = 24, className, strokeWidth = 2 }: IconProps) {
   return (

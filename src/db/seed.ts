@@ -295,14 +295,20 @@ function construirPartidos(): Partido[] {
 function construirEntrenamientos(): Entrenamiento[] {
   const t = now();
   // Cinco días consecutivos desde hoy hacia atrás (racha de 5)
-  const tipos: TipoEntreno[] = ['Técnico', 'Físico', 'Táctico', 'Técnico', 'Físico'];
+  const tiposPorDia: TipoEntreno[][] = [
+    ['Técnico'],
+    ['Físico'],
+    ['Táctico'],
+    ['Técnico', 'Físico'],
+    ['Físico'],
+  ];
   const entrenos: Entrenamiento[] = [];
   for (let i = 0; i < 5; i++) {
     entrenos.push({
       id: uuid(),
       fecha: restarDias(hoyISO(), i),
       duracion: 90,
-      tipo: tipos[i],
+      tipos: tiposPorDia[i],
       clima: 'Soleado',
       temperatura: 21,
       asistencia: 'Presente',
@@ -320,7 +326,7 @@ function construirEntrenamientos(): Entrenamiento[] {
     id: uuid(),
     fecha: restarDias(hoyISO(), 40),
     duracion: 90,
-    tipo: 'Físico',
+    tipos: ['Físico'],
     asistencia: 'Presente',
     ejerciciosTrabajados: ['Físico'],
     rpe: 8,

@@ -107,6 +107,12 @@ export function VerSesionGym() {
       </div>
 
       <div className="flex gap-3">
+        <Link
+          to={`/gym/${sesion.id}/editar`}
+          className="flex-1 text-center px-4 py-2.5 rounded-lg bg-azul-principal hover:bg-azul-oscuro text-white font-semibold transition"
+        >
+          Editar
+        </Link>
         <button
           type="button"
           onClick={handleBorrar}

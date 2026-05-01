@@ -107,6 +107,14 @@ function App() {
             }
           />
           <Route
+            path="entrenos/:id/editar"
+            element={
+              <Suspense fallback={<LoadingSkeleton />}>
+                <NuevoEntreno />
+              </Suspense>
+            }
+          />
+          <Route
             path="gym"
             element={
               <Suspense fallback={<LoadingSkeleton />}>
@@ -127,6 +135,14 @@ function App() {
             element={
               <Suspense fallback={<LoadingSkeleton />}>
                 <VerSesionGym />
+              </Suspense>
+            }
+          />
+          <Route
+            path="gym/:id/editar"
+            element={
+              <Suspense fallback={<LoadingSkeleton />}>
+                <NuevaSesionGym />
               </Suspense>
             }
           />

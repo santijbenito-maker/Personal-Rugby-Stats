@@ -1,10 +1,11 @@
-import { useState, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useState, useMemo } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/schema';
 import { hoyISO } from '../lib/fechas';
 import { detectarPRs, ultimaVezEjercicio } from '../lib/gym';
 import { mejorPesoHistorico } from '../lib/calculos';
+import { LoadingSkeleton } from '../components/LoadingSkeleton';
 import type {
   GymSesion,
   GymEjercicio,
@@ -41,13 +42,33 @@ function sesionInicial(): GymSesion {
 export function NuevaSesionGym() {
   const navigate = useNavigate();
   const { mostrar } = useToast();
+  // Modo edición cuando la ruta es /gym/:id/editar.
+  const { id } = useParams<{ id?: string }>();
+  const esEdicion = Boolean(id);
+  const sesionExistente = useLiveQuery(
+    () => (id ? db.gym_sesiones.get(id) : undefined),
+    [id],
+  );
   const [s, setS] = useState<GymSesion>(sesionInicial);
+  const [cargado, setCargado] = useState(!esEdicion);
   const [error, setError] = useState<string | null>(null);
   const [selectorAbierto, setSelectorAbierto] = useState(false);
   const [guardando, setGuardando] = useState(false);
 
   const ejerciciosDB = useLiveQuery(() => db.gym_ejercicios.toArray(), [], []);
   const sesionesPrevias = useLiveQuery(() => db.gym_sesiones.toArray(), [], []);
+
+  useEffect(() => {
+    if (esEdicion && sesionExistente && !cargado) {
+      // Spread defaults primero por si vienen campos undefined.
+      setS({ ...sesionInicial(), ...sesionExistente });
+      setCargado(true);
+    }
+  }, [esEdicion, sesionExistente, cargado]);
+
+  if (esEdicion && sesionExistente === undefined) {
+    return <LoadingSkeleton />;
+  }
 
   // Mapa de mejores pesos previos por ejercicioId — usado por el resumen
   // para mostrar 🏆 PR en vivo mientras se carga.
@@ -111,39 +132,54 @@ export function NuevaSesionGym() {
     setError(null);
     setGuardando(true);
     try {
-      // Detección de PRs (muta s.ejercicios[i].fueRecord)
+      // Para PRs, comparamos contra las sesiones previas EXCLUYENDO esta misma
+      // sesión (en modo edición, sino se compararía contra sí misma).
+      const sesionesParaPR = esEdicion
+        ? sesionesPrevias.filter((ses) => ses.id !== s.id)
+        : sesionesPrevias;
+
+      // Detección de PRs (muta sesionFinal.ejercicios[i].fueRecord)
       const sesionFinal: GymSesion = {
         ...s,
         ejercicios: s.ejercicios.map((e) => ({ ...e, series: e.series.map((sr) => ({ ...sr })) })),
       };
-      const prs = detectarPRs(sesionFinal, sesionesPrevias, ejerciciosDB);
+      const prs = detectarPRs(sesionFinal, sesionesParaPR, ejerciciosDB);
 
-      // Incrementar frecuenciaDeUso de cada ejercicio usado
+      // En edición usamos put (upsert) y NO incrementamos frecuenciaDeUso para
+      // no doblar el contador. Solo se incrementa al crear.
       await db.transaction('rw', db.gym_sesiones, db.gym_ejercicios, async () => {
-        await db.gym_sesiones.add(sesionFinal);
-        for (const ej of sesionFinal.ejercicios) {
-          const def = await db.gym_ejercicios.get(ej.ejercicioId);
-          if (def) {
-            await db.gym_ejercicios.update(ej.ejercicioId, {
-              frecuenciaDeUso: (def.frecuenciaDeUso ?? 0) + 1,
-            });
+        if (esEdicion) {
+          await db.gym_sesiones.put(sesionFinal);
+        } else {
+          await db.gym_sesiones.add(sesionFinal);
+          for (const ej of sesionFinal.ejercicios) {
+            const def = await db.gym_ejercicios.get(ej.ejercicioId);
+            if (def) {
+              await db.gym_ejercicios.update(ej.ejercicioId, {
+                frecuenciaDeUso: (def.frecuenciaDeUso ?? 0) + 1,
+              });
+            }
           }
         }
       });
 
-      // Mostrar toasts de PRs
-      for (const pr of prs) {
-        mostrar({
-          tipo: 'pr',
-          mensaje: `¡Nuevo PR en ${pr.nombre}! ${pr.pesoNuevo} kg × ${pr.repsNuevo}`,
-          duracion: 6000,
-        });
-      }
-      if (prs.length === 0) {
-        mostrar({ tipo: 'exito', mensaje: 'Sesión guardada' });
+      // Mostrar toasts de PRs (solo en creación; al editar evitamos confusión)
+      if (!esEdicion) {
+        for (const pr of prs) {
+          mostrar({
+            tipo: 'pr',
+            mensaje: `¡Nuevo PR en ${pr.nombre}! ${pr.pesoNuevo} kg × ${pr.repsNuevo}`,
+            duracion: 6000,
+          });
+        }
+        if (prs.length === 0) {
+          mostrar({ tipo: 'exito', mensaje: 'Sesión guardada' });
+        }
+      } else {
+        mostrar({ tipo: 'exito', mensaje: 'Cambios guardados' });
       }
 
-      navigate('/gym');
+      navigate(esEdicion ? `/gym/${s.id}` : '/gym');
     } finally {
       setGuardando(false);
     }
@@ -154,16 +190,20 @@ export function NuevaSesionGym() {
       {/* Cabecera */}
       <div className="flex items-center gap-3">
         <Link
-          to="/gym"
+          to={esEdicion ? `/gym/${s.id}` : '/gym'}
           aria-label="Volver"
           className="p-2 rounded-full hover:bg-slate-200/50 dark:hover:bg-slate-800 transition"
         >
           <IconoFlechaIzq size={22} />
         </Link>
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Nueva sesión de gym</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+            {esEdicion ? 'Editar sesión de gym' : 'Nueva sesión de gym'}
+          </h1>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            Registrá los ejercicios y series que hiciste
+            {esEdicion
+              ? 'Modificá los datos y guardá los cambios'
+              : 'Registrá los ejercicios y series que hiciste'}
           </p>
         </div>
       </div>
@@ -285,7 +325,7 @@ export function NuevaSesionGym() {
       {/* Botones */}
       <div className="flex gap-3 sticky bottom-20 md:bottom-0 pt-2">
         <Link
-          to="/gym"
+          to={esEdicion ? `/gym/${s.id}` : '/gym'}
           className="flex-1 text-center px-4 py-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 transition"
         >
           Cancelar
@@ -296,7 +336,7 @@ export function NuevaSesionGym() {
           disabled={guardando}
           className="flex-1 px-4 py-3 rounded-lg bg-amarillo-acento hover:brightness-95 text-azul-oscuro font-bold shadow transition disabled:opacity-50"
         >
-          {guardando ? 'Guardando…' : 'Guardar sesión'}
+          {guardando ? 'Guardando…' : esEdicion ? 'Guardar cambios' : 'Guardar sesión'}
         </button>
       </div>
 

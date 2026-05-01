@@ -233,6 +233,36 @@ class RugbyDB extends Dexie {
             });
         }
       });
+
+    // Versión 8: tipo (string único) → tipos (array) en Entrenamiento.
+    // Mismo patrón que la migración v6 de partido.posicion → posiciones:
+    // permite cargar entrenamientos que combinan técnico + físico, etc.
+    this.version(8)
+      .stores({
+        partidos: 'id, fecha, actualizadoEn',
+        entrenamientos: 'id, fecha, asistencia, actualizadoEn',
+        gym_sesiones: 'id, fecha, foco, actualizadoEn',
+        gym_ejercicios: 'id, nombre, grupoMuscular, frecuenciaDeUso, actualizadoEn',
+        tests_fisicos: 'id, fecha, actualizadoEn',
+        lesiones: 'id, fecha, fechaAlta, actualizadoEn',
+        config: 'clave, actualizadoEn',
+        videos: 'id, partidoId, creadoEn',
+        tombstones: '[kind+id], deletedAt',
+      })
+      .upgrade(async (tx) => {
+        type EntrenamientoConTipoViejo = Partial<Entrenamiento> & { tipo?: string };
+        await tx
+          .table('entrenamientos')
+          .toCollection()
+          .modify((e: EntrenamientoConTipoViejo) => {
+            if (!Array.isArray(e.tipos)) {
+              e.tipos = e.tipo
+                ? [e.tipo as Entrenamiento['tipos'][number]]
+                : ['Técnico'];
+            }
+            if ('tipo' in e) delete e.tipo;
+          });
+      });
   }
 }
 
