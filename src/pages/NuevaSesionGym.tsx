@@ -66,10 +66,6 @@ export function NuevaSesionGym() {
     }
   }, [esEdicion, sesionExistente, cargado]);
 
-  if (esEdicion && sesionExistente === undefined) {
-    return <LoadingSkeleton />;
-  }
-
   // Mapa de mejores pesos previos por ejercicioId — usado por el resumen
   // para mostrar 🏆 PR en vivo mientras se carga.
   const mejoresPrevios = useMemo(() => {
@@ -80,13 +76,21 @@ export function NuevaSesionGym() {
     return m;
   }, [s.ejercicios, s.fecha, sesionesPrevias]);
 
-  const set = <K extends keyof GymSesion>(clave: K, v: GymSesion[K]) =>
-    setS((prev) => ({ ...prev, [clave]: v, actualizadoEn: Date.now() }));
-
   const yaAgregados = useMemo(
     () => new Set(s.ejercicios.map((e) => e.ejercicioId)),
     [s.ejercicios],
   );
+
+  // Early return DESPUÉS de todos los hooks: en modo edición y mientras Dexie
+  // todavía no resolvió la query del registro a editar, mostramos un skeleton.
+  // (Si lo hiciéramos antes de los useMemo, el orden de hooks cambiaría entre
+  // renders y React tiraría un error de "rendered fewer hooks than expected").
+  if (esEdicion && sesionExistente === undefined) {
+    return <LoadingSkeleton />;
+  }
+
+  const set = <K extends keyof GymSesion>(clave: K, v: GymSesion[K]) =>
+    setS((prev) => ({ ...prev, [clave]: v, actualizadoEn: Date.now() }));
 
   /** Agregar un ejercicio a la sesión, precargando series si tiene histórico. */
   const handleAgregarEjercicio = (ej: GymEjercicio) => {
