@@ -72,9 +72,6 @@ export function ResumenPartido({ partido: p }: ResumenPartidoProps) {
             [
               `${p.tries} try${p.tries === 1 ? '' : 's'}`,
               `${p.asistencias} asist`,
-              (p.romperLaLinea ?? 0) > 0
-                ? `${p.romperLaLinea} rompe-línea${p.romperLaLinea === 1 ? '' : 's'}`
-                : null,
               p.quiebres > 0 ? `${p.quiebres} quiebres` : null,
               p.offloads > 0 ? `${p.offloads} offloads` : null,
               (p.knockOns ?? 0) > 0 ? `${p.knockOns} knock-on${p.knockOns === 1 ? '' : 's'}` : null,
