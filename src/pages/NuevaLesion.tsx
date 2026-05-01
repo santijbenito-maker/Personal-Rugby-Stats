@@ -56,12 +56,41 @@ export function NuevaLesion() {
   const navigate = useNavigate();
   const { mostrar } = useToast();
   const [l, setL] = useState<Lesion>(lesionInicial);
+  const [error, setError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
 
   const set = <K extends keyof Lesion>(clave: K, v: Lesion[K]) =>
     setL((prev) => ({ ...prev, [clave]: v, actualizadoEn: Date.now() }));
 
+  // El "estado" es derivado de si la lesión tiene fechaAlta o no.
+  // - Activa = todavía estás recuperándote, fechaAlta vacío
+  // - Recuperada = ya estás bien, con fecha de alta cargada
+  // El toggle permite registrar lesiones del pasado ya cerradas con la
+  // misma vista que las activas.
+  const estado: 'activa' | 'recuperada' = l.fechaAlta ? 'recuperada' : 'activa';
+
+  const cambiarEstado = (nuevo: 'activa' | 'recuperada') => {
+    if (nuevo === estado) return;
+    if (nuevo === 'recuperada') {
+      // Pre-llenamos fechaAlta con hoy. El usuario la ajusta a la fecha real.
+      set('fechaAlta', hoyISO());
+    } else {
+      set('fechaAlta', undefined);
+    }
+  };
+
   const handleGuardar = async () => {
+    if (estado === 'recuperada' && !l.fechaAlta) {
+      setError('Si marcaste la lesión como Recuperada, cargá la fecha de alta.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    if (l.fechaAlta && l.fechaAlta < l.fecha) {
+      setError('La fecha de alta no puede ser anterior a la fecha de la lesión.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    setError(null);
     setGuardando(true);
     try {
       await db.lesiones.add(l);
@@ -84,9 +113,34 @@ export function NuevaLesion() {
         </Link>
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Nueva lesión</h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400">Registrá la lesión y su tratamiento</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Registrá la lesión y su tratamiento. Podés cargar lesiones del pasado ya recuperadas.
+          </p>
         </div>
       </div>
+
+      {error && (
+        <div className="bg-rojo/10 border border-rojo/30 text-rojo px-4 py-2.5 rounded-lg text-sm font-medium">
+          {error}
+        </div>
+      )}
+
+      <Seccion titulo="Estado">
+        <CampoPersonalizado label="¿En qué situación está esta lesión?">
+          <Segmented<'activa' | 'recuperada'>
+            opciones={[
+              { valor: 'activa', label: '🩹 Activa' },
+              { valor: 'recuperada', label: '✅ Recuperada' },
+            ]}
+            valor={estado}
+            onChange={cambiarEstado}
+          />
+        </CampoPersonalizado>
+        <p className="text-xs text-slate-500 dark:text-slate-400 leading-snug">
+          Elegí <strong>Recuperada</strong> para registrar una lesión vieja que ya está cerrada
+          (te va a pedir la fecha de alta).
+        </p>
+      </Seccion>
 
       <Seccion titulo="Datos básicos">
         <CampoTexto
@@ -95,6 +149,7 @@ export function NuevaLesion() {
           type="date"
           value={l.fecha}
           onChange={(ev) => set('fecha', ev.target.value)}
+          ayuda="Cuándo te lesionaste (cualquier fecha, presente o pasado)"
         />
         <CampoSelect
           label="Zona del cuerpo"
@@ -152,14 +207,16 @@ export function NuevaLesion() {
           value={l.diasEstimados}
           onChange={(ev) => set('diasEstimados', Math.max(0, Number(ev.target.value) || 0))}
         />
-        <CampoTexto
-          label="Fecha de alta (opcional)"
-          hint="✅"
-          type="date"
-          value={l.fechaAlta ?? ''}
-          onChange={(ev) => set('fechaAlta', ev.target.value || undefined)}
-          ayuda="Cargala cuando estés recuperado"
-        />
+        {estado === 'recuperada' && (
+          <CampoTexto
+            label="Fecha de alta"
+            hint="✅"
+            type="date"
+            value={l.fechaAlta ?? ''}
+            onChange={(ev) => set('fechaAlta', ev.target.value || undefined)}
+            ayuda="Cuándo volviste a estar bien (no puede ser anterior a la fecha de la lesión)"
+          />
+        )}
       </Seccion>
 
       <Seccion titulo="Tratamiento y notas">
