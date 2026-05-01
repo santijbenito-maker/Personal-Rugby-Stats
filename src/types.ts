@@ -10,7 +10,7 @@
 
 export type Torneo = 'Oficial URT' | 'Amistoso' | 'Seven' | 'Nacional';
 export type Condicion = 'Local' | 'Visitante';
-export type Clima = 'Soleado' | 'Nublado' | 'Lluvia' | 'Frío';
+export type Clima = 'Soleado' | 'Nublado' | 'Lluvia' | 'Frío' | 'Noche';
 export type EstadoCampo = 'Seco' | 'Húmedo' | 'Embarrado' | 'Pelado';
 export type Posicion = '9 - Medio scrum' | '10 - Apertura';
 export type ComoEntre = 'Titular' | 'Suplente';
@@ -99,8 +99,11 @@ export type Entrenamiento = {
   id: string;
   fecha: string;
   duracion: number; // minutos
-  tipo: TipoEntreno;
-  minutosReales?: number; // sólo si tipo = "Partido práctica"
+  /** Tipos de entrenamiento. Mín 1. Si la sesión combinó técnico + físico,
+   *  por ejemplo, se cargan ambos. Antes era un único string ("tipo"); en
+   *  v8 se migró a array. */
+  tipos: TipoEntreno[];
+  minutosReales?: number; // sólo si tipos incluye "Partido práctica"
   clima?: Clima;
   temperatura?: number;
   asistencia: Asistencia;

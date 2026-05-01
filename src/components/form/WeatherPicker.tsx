@@ -1,5 +1,5 @@
 import type { Clima } from '../../types';
-import { IconoSol, IconoNube, IconoLluvia, IconoFrio } from '../icons';
+import { IconoSol, IconoNube, IconoLluvia, IconoFrio, IconoLuna } from '../icons';
 
 type WeatherPickerProps = {
   valor?: Clima;
@@ -11,14 +11,15 @@ const opciones: { valor: Clima; label: string; Icono: typeof IconoSol }[] = [
   { valor: 'Nublado', label: 'Nublado', Icono: IconoNube },
   { valor: 'Lluvia', label: 'Lluvia', Icono: IconoLluvia },
   { valor: 'Frío', label: 'Frío', Icono: IconoFrio },
+  { valor: 'Noche', label: 'Noche', Icono: IconoLuna },
 ];
 
 /**
- * Selector de clima con 4 botones + íconos. Toggle: tocarlo de nuevo deselecciona.
+ * Selector de clima con 5 botones + íconos. Toggle: tocarlo de nuevo deselecciona.
  */
 export function WeatherPicker({ valor, onChange }: WeatherPickerProps) {
   return (
-    <div className="grid grid-cols-4 gap-2">
+    <div className="grid grid-cols-5 gap-2">
       {opciones.map(({ valor: v, label, Icono }) => {
         const activo = v === valor;
         return (

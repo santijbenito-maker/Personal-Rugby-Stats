@@ -15,32 +15,38 @@ const colorPorTipo: Record<string, string> = {
 };
 
 /**
- * Tarjeta de entrenamiento en la lista: fecha + tipo + duración + RPE +
+ * Tarjeta de entrenamiento en la lista: fecha + tipos + duración + RPE +
  * sensaciones, con badge de asistencia y chips de ejercicios trabajados.
  */
 export function EntrenoCard({ entreno: e }: EntrenoCardProps) {
+  // Compat con datos viejos que todavía no migraron al array.
+  const tipos = e.tipos && e.tipos.length > 0 ? e.tipos : ['Técnico'];
+  const incluyePartidoPractica = tipos.includes('Partido práctica');
   return (
     <Link
       to={`/entrenos/${e.id}`}
       className="block bg-white dark:bg-slate-900 rounded-xl shadow-tarjeta border border-slate-200 dark:border-slate-800 p-4 hover:border-azul-principal/30 active:scale-[0.99] transition"
     >
-      {/* Cabecera: fecha + tipo + asistencia */}
+      {/* Cabecera: fecha + tipos + asistencia */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-xs text-slate-500 dark:text-slate-400">
             {formatoCorto(e.fecha)} · {hace(e.fecha)}
           </p>
           <div className="mt-1 flex items-center gap-2 flex-wrap">
-            <span
-              className={[
-                'inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide',
-                colorPorTipo[e.tipo] ?? 'bg-slate-200 text-slate-700',
-              ].join(' ')}
-            >
-              {e.tipo}
-            </span>
+            {tipos.map((tipo) => (
+              <span
+                key={tipo}
+                className={[
+                  'inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide',
+                  colorPorTipo[tipo] ?? 'bg-slate-200 text-slate-700',
+                ].join(' ')}
+              >
+                {tipo}
+              </span>
+            ))}
             <span className="text-sm font-bold">{e.duracion} min</span>
-            {e.tipo === 'Partido práctica' && e.minutosReales !== undefined && (
+            {incluyePartidoPractica && e.minutosReales !== undefined && (
               <span className="text-xs text-slate-500 dark:text-slate-400">
                 ({e.minutosReales} min jugados)
               </span>

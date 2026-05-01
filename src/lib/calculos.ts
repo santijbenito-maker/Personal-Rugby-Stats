@@ -291,10 +291,11 @@ export function ultimasActividades(
     });
   }
   for (const e of entrenos) {
+    const tipos = e.tipos && e.tipos.length > 0 ? e.tipos : ['Técnico'];
     items.push({
       fecha: e.fecha,
       tipo: 'Entreno',
-      descripcion: e.tipo,
+      descripcion: tipos.join(' + '),
     });
   }
   for (const g of gym) {

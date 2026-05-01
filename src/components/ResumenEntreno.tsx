@@ -13,6 +13,8 @@ type ResumenEntrenoProps = {
 export function ResumenEntreno({ entreno: e }: ResumenEntrenoProps) {
   const promedioSensacion = ((e.sensacionFisico + e.sensacionTecnico) / 2).toFixed(1);
   const ejercicios = e.ejerciciosTrabajados.length;
+  const tipos = e.tipos && e.tipos.length > 0 ? e.tipos : ['Técnico'];
+  const incluyePartidoPractica = tipos.includes('Partido práctica');
 
   return (
     <section className="bg-gradient-to-br from-azul-principal to-azul-oscuro text-white rounded-xl p-5 shadow-lg">
@@ -24,11 +26,11 @@ export function ResumenEntreno({ entreno: e }: ResumenEntrenoProps) {
       <div className="flex items-center justify-between gap-3 mb-3">
         <div className="min-w-0">
           <p className="text-[11px] uppercase tracking-wide text-amarillo-claro/80">
-            {formatoCorto(e.fecha)} · {e.tipo}
+            {formatoCorto(e.fecha)} · {tipos.join(' + ')}
           </p>
           <p className="mt-0.5 font-bold text-base leading-tight">
             {e.duracion} min
-            {e.tipo === 'Partido práctica' && e.minutosReales !== undefined && (
+            {incluyePartidoPractica && e.minutosReales !== undefined && (
               <span className="ml-2 text-sm font-medium opacity-80">
                 · {e.minutosReales} min jugados
               </span>
