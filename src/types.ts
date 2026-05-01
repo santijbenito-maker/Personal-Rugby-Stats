@@ -36,9 +36,7 @@ export type Partido = {
   // Ataque
   tries: number;
   asistencias: number;
-  pasesCompletados: number;
-  pasesIntentados: number;
-  metrosGanados: number;
+  romperLaLinea: number;
   quiebres: number;
   offloads: number;
   knockOns: number;

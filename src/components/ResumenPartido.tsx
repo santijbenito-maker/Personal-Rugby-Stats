@@ -21,10 +21,6 @@ export function ResumenPartido({ partido: p }: ResumenPartidoProps) {
         ? 'text-rojo'
         : 'text-slate-500';
 
-  const pctPase =
-    p.pasesIntentados > 0
-      ? Math.round((p.pasesCompletados / p.pasesIntentados) * 100)
-      : null;
   const pctTackles =
     p.tacklesIntentados > 0
       ? Math.round((p.tacklesEfectivos / p.tacklesIntentados) * 100)
@@ -76,8 +72,11 @@ export function ResumenPartido({ partido: p }: ResumenPartidoProps) {
             [
               `${p.tries} try${p.tries === 1 ? '' : 's'}`,
               `${p.asistencias} asist`,
-              `${p.metrosGanados}m`,
-              pctPase !== null ? `pases ${p.pasesCompletados}/${p.pasesIntentados} = ${pctPase}%` : null,
+              (p.romperLaLinea ?? 0) > 0
+                ? `${p.romperLaLinea} rompe-línea${p.romperLaLinea === 1 ? '' : 's'}`
+                : null,
+              p.quiebres > 0 ? `${p.quiebres} quiebres` : null,
+              p.offloads > 0 ? `${p.offloads} offloads` : null,
               (p.knockOns ?? 0) > 0 ? `${p.knockOns} knock-on${p.knockOns === 1 ? '' : 's'}` : null,
               (p.usoPie ?? 0) > 0 ? `pie ×${p.usoPie}` : null,
             ]

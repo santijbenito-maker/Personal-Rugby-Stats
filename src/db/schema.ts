@@ -263,6 +263,44 @@ class RugbyDB extends Dexie {
             if ('tipo' in e) delete e.tipo;
           });
       });
+
+    // Versión 9: cambios en stats de partido — Ataque.
+    //   - Se elimina la fracción de pases (pasesCompletados / pasesIntentados):
+    //     limpiamos esos campos de los registros existentes.
+    //   - "metrosGanados" (cuántos metros ganaste con la pelota) se reemplaza
+    //     por "romperLaLinea" (cuántas veces rompiste la línea defensiva).
+    //     Como son cosas distintas, el valor viejo no es comparable con el
+    //     nuevo: inicializamos romperLaLinea en 0 para registros existentes
+    //     y borramos metrosGanados. Si quiere preservar info histórica, el
+    //     usuario puede editar cada partido viejo y completar el nuevo campo.
+    this.version(9)
+      .stores({
+        partidos: 'id, fecha, actualizadoEn',
+        entrenamientos: 'id, fecha, asistencia, actualizadoEn',
+        gym_sesiones: 'id, fecha, foco, actualizadoEn',
+        gym_ejercicios: 'id, nombre, grupoMuscular, frecuenciaDeUso, actualizadoEn',
+        tests_fisicos: 'id, fecha, actualizadoEn',
+        lesiones: 'id, fecha, fechaAlta, actualizadoEn',
+        config: 'clave, actualizadoEn',
+        videos: 'id, partidoId, creadoEn',
+        tombstones: '[kind+id], deletedAt',
+      })
+      .upgrade(async (tx) => {
+        type PartidoConCamposViejos = Partial<Partido> & {
+          pasesCompletados?: number;
+          pasesIntentados?: number;
+          metrosGanados?: number;
+        };
+        await tx
+          .table('partidos')
+          .toCollection()
+          .modify((p: PartidoConCamposViejos) => {
+            if (typeof p.romperLaLinea !== 'number') p.romperLaLinea = 0;
+            if ('pasesCompletados' in p) delete p.pasesCompletados;
+            if ('pasesIntentados' in p) delete p.pasesIntentados;
+            if ('metrosGanados' in p) delete p.metrosGanados;
+          });
+      });
   }
 }
 

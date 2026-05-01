@@ -21,8 +21,6 @@ export function MatchCard({ partido: p }: MatchCardProps) {
         ? 'text-rojo'
         : 'text-slate-500';
 
-  const pctPase = p.pasesIntentados > 0 ? Math.round((p.pasesCompletados / p.pasesIntentados) * 100) : null;
-
   return (
     <Link
       to={`/partidos/${p.id}`}
@@ -56,11 +54,7 @@ export function MatchCard({ partido: p }: MatchCardProps) {
           valor={p.kicksPaloIntentados > 0 ? `${p.kicksPaloConvertidos}/${p.kicksPaloIntentados}` : '—'}
           color="azul"
         />
-        <StatMini
-          label="Pases"
-          valor={pctPase !== null ? `${pctPase}%` : '—'}
-          color="amarillo"
-        />
+        <StatMini label="Rompe línea" valor={p.romperLaLinea ?? 0} color="amarillo" />
         <StatMini label="Minutos" valor={p.minutos} color="azul" />
       </div>
     </Link>
