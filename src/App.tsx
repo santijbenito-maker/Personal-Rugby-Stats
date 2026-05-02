@@ -195,6 +195,14 @@ function App() {
             }
           />
           <Route
+            path="lesiones/:id/editar"
+            element={
+              <Suspense fallback={<LoadingSkeleton />}>
+                <NuevaLesion />
+              </Suspense>
+            }
+          />
+          <Route
             path="perfil"
             element={
               <Suspense fallback={<LoadingSkeleton />}>

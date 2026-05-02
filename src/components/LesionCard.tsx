@@ -34,7 +34,8 @@ export function LesionCard({ lesion: l }: Props) {
             )}
           </p>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            {formatoCorto(l.fecha)} · {hace(l.fecha)} · {l.tipo}
+            {formatoCorto(l.fecha)} · {hace(l.fecha)} ·{' '}
+            {l.tipo === 'Otro' && l.tipoOtro ? l.tipoOtro : l.tipo}
           </p>
         </div>
         <div className="flex flex-col items-end gap-1 shrink-0">
