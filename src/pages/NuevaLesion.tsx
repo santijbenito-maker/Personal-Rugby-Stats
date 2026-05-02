@@ -1,7 +1,9 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/schema';
 import { hoyISO, sumarDias } from '../lib/fechas';
+import { LoadingSkeleton } from '../components/LoadingSkeleton';
 import type {
   Lesion,
   ZonaLesion,
@@ -58,9 +60,26 @@ function lesionInicial(): Lesion {
 export function NuevaLesion() {
   const navigate = useNavigate();
   const { mostrar } = useToast();
+  // Modo edición cuando la ruta es /lesiones/:id/editar.
+  const { id } = useParams<{ id?: string }>();
+  const esEdicion = Boolean(id);
+  const lesionExistente = useLiveQuery(
+    () => (id ? db.lesiones.get(id) : undefined),
+    [id],
+  );
   const [l, setL] = useState<Lesion>(lesionInicial);
+  const [cargado, setCargado] = useState(!esEdicion);
   const [error, setError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
+
+  useEffect(() => {
+    if (esEdicion && lesionExistente && !cargado) {
+      // Spread defaults primero para que campos viejos undefined tengan
+      // un valor sensato en el form (ej. fechaAlta para registros pre-v...).
+      setL({ ...lesionInicial(), ...lesionExistente });
+      setCargado(true);
+    }
+  }, [esEdicion, lesionExistente, cargado]);
 
   const set = <K extends keyof Lesion>(clave: K, v: Lesion[K]) =>
     setL((prev) => ({ ...prev, [clave]: v, actualizadoEn: Date.now() }));
@@ -104,31 +123,55 @@ export function NuevaLesion() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
+    if (l.tipo === 'Otro' && !(l.tipoOtro ?? '').trim()) {
+      setError('Si elegiste "Otro" como tipo, especificá cuál fue la lesión.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
     setError(null);
     setGuardando(true);
     try {
-      await db.lesiones.add(l);
-      mostrar({ tipo: 'exito', mensaje: 'Lesión registrada' });
-      navigate('/lesiones');
+      // Limpiamos tipoOtro si el tipo no es "Otro" (para que cambiar de
+      // "Otro" → "Muscular" no deje el detalle viejo huérfano en la base).
+      const limpio: Lesion = {
+        ...l,
+        tipoOtro: l.tipo === 'Otro' ? l.tipoOtro?.trim() : undefined,
+      };
+      // put = upsert: vale para crear y para editar.
+      await db.lesiones.put(limpio);
+      mostrar({
+        tipo: 'exito',
+        mensaje: esEdicion ? 'Cambios guardados' : 'Lesión registrada',
+      });
+      navigate(esEdicion ? `/lesiones/${l.id}` : '/lesiones');
     } finally {
       setGuardando(false);
     }
   };
 
+  // Early return después de los hooks (ver la regla de hooks de React).
+  if (esEdicion && lesionExistente === undefined) {
+    return <LoadingSkeleton />;
+  }
+
   return (
     <div className="max-w-3xl mx-auto space-y-5 pb-6">
       <div className="flex items-center gap-3">
         <Link
-          to="/lesiones"
+          to={esEdicion ? `/lesiones/${l.id}` : '/lesiones'}
           aria-label="Volver"
           className="p-2 rounded-full hover:bg-slate-200/50 dark:hover:bg-slate-800 transition"
         >
           <IconoFlechaIzq size={22} />
         </Link>
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Nueva lesión</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+            {esEdicion ? 'Editar lesión' : 'Nueva lesión'}
+          </h1>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            Registrá la lesión y su tratamiento. Podés cargar lesiones del pasado ya recuperadas.
+            {esEdicion
+              ? 'Modificá los datos y guardá los cambios'
+              : 'Registrá la lesión y su tratamiento. Podés cargar lesiones del pasado ya recuperadas.'}
           </p>
         </div>
       </div>
@@ -197,9 +240,20 @@ export function NuevaLesion() {
             { valor: 'Golpe', label: 'Golpe' },
             { valor: 'Esguince', label: 'Esguince' },
             { valor: 'Fractura', label: 'Fractura' },
-            { valor: 'Otro', label: 'Otro' },
+            { valor: 'Otro', label: 'Otro (especificar)' },
           ]}
         />
+        {l.tipo === 'Otro' && (
+          <CampoTexto
+            label="¿Qué tipo de lesión fue?"
+            hint="✏️"
+            type="text"
+            value={l.tipoOtro ?? ''}
+            onChange={(ev) => set('tipoOtro', ev.target.value)}
+            placeholder="Ej: tendinitis, contusión ósea, latigazo cervical…"
+            ayuda="Describí en pocas palabras la lesión específica"
+          />
+        )}
         <CampoPersonalizado label="Gravedad">
           <Segmented<Gravedad>
             opciones={[
@@ -256,7 +310,7 @@ export function NuevaLesion() {
 
       <div className="flex gap-3 sticky bottom-20 md:bottom-0 pt-2">
         <Link
-          to="/lesiones"
+          to={esEdicion ? `/lesiones/${l.id}` : '/lesiones'}
           className="flex-1 text-center px-4 py-3 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 transition"
         >
           Cancelar
@@ -267,7 +321,7 @@ export function NuevaLesion() {
           disabled={guardando}
           className="flex-1 px-4 py-3 rounded-lg bg-amarillo-acento hover:brightness-95 text-azul-oscuro font-bold shadow transition disabled:opacity-50"
         >
-          {guardando ? 'Guardando…' : 'Guardar lesión'}
+          {guardando ? 'Guardando…' : esEdicion ? 'Guardar cambios' : 'Guardar lesión'}
         </button>
       </div>
     </div>

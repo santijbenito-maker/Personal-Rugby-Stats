@@ -205,6 +205,8 @@ export type Lesion = {
   zona: ZonaLesion;
   lado: LadoLesion;
   tipo: TipoLesion;
+  /** Detalle libre cuando tipo === "Otro". Ignorado para los demás tipos. */
+  tipoOtro?: string;
   gravedad: Gravedad;
   diasEstimados: number;
   fechaAlta?: string;

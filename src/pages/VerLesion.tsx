@@ -112,7 +112,14 @@ export function VerLesion() {
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5">
         <h2 className="font-semibold mb-3">Detalle</h2>
         <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-          <Fila label="Tipo" valor={lesion.tipo} />
+          <Fila
+            label="Tipo"
+            valor={
+              lesion.tipo === 'Otro' && lesion.tipoOtro
+                ? `Otro · ${lesion.tipoOtro}`
+                : lesion.tipo
+            }
+          />
           <Fila label="Gravedad" valor={lesion.gravedad} />
           <Fila label="Días estimados" valor={`${lesion.diasEstimados}`} />
           <Fila label="Días perdidos" valor={`${dias}`} />
@@ -146,6 +153,12 @@ export function VerLesion() {
       )}
 
       <div className="flex gap-3">
+        <Link
+          to={`/lesiones/${lesion.id}/editar`}
+          className="flex-1 text-center px-4 py-2.5 rounded-lg bg-azul-principal hover:bg-azul-oscuro text-white font-semibold transition"
+        >
+          Editar
+        </Link>
         <button
           type="button"
           onClick={handleBorrar}
