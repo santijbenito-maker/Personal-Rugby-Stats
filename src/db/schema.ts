@@ -324,6 +324,65 @@ class RugbyDB extends Dexie {
             if ('romperLaLinea' in p) delete p.romperLaLinea;
           });
       });
+
+    // Versión 11: refactor de TestFisico al modelo discriminado por "kind".
+    // Antes era un único registro con todas las métricas opcionales. Ahora
+    // cada test es un tipo específico (40m / sentadilla / press_banca / bronco)
+    // con sus campos propios. Razón: permite detección automática de PR por
+    // tipo y gráfica de evolución separada.
+    //
+    // Migración: convertimos cada TestFisico viejo que tuviera "t40m"
+    // cargado en un nuevo registro kind="40m". Los demás campos viejos
+    // (pesoCorporal, altura, beepTest, flexiones, abdominales) se descartan
+    // — el usuario pidió explícitamente quitar beep test, flexiones y
+    // abdominales; pesoCorporal y altura quedan fuera del nuevo modelo.
+    this.version(11)
+      .stores({
+        partidos: 'id, fecha, actualizadoEn',
+        entrenamientos: 'id, fecha, asistencia, actualizadoEn',
+        gym_sesiones: 'id, fecha, foco, actualizadoEn',
+        gym_ejercicios: 'id, nombre, grupoMuscular, frecuenciaDeUso, actualizadoEn',
+        tests_fisicos: 'id, fecha, kind, actualizadoEn',
+        lesiones: 'id, fecha, fechaAlta, actualizadoEn',
+        config: 'clave, actualizadoEn',
+        videos: 'id, partidoId, creadoEn',
+        tombstones: '[kind+id], deletedAt',
+      })
+      .upgrade(async (tx) => {
+        type TestViejo = {
+          id: string;
+          fecha: string;
+          pesoCorporal?: number;
+          altura?: number;
+          t40m?: number;
+          beepTest?: number;
+          flexiones?: number;
+          abdominales?: number;
+          notas?: string;
+          creadoEn: number;
+          actualizadoEn: number;
+        };
+        const tabla = tx.table('tests_fisicos');
+        const tests = (await tabla.toArray()) as TestViejo[];
+        await tabla.clear();
+        for (const t of tests) {
+          if (typeof t.t40m === 'number') {
+            await tabla.add({
+              id: t.id,
+              fecha: t.fecha,
+              kind: '40m',
+              segundos: t.t40m,
+              sensacionFisico: 5,
+              rpe: 5,
+              notas: t.notas,
+              creadoEn: t.creadoEn,
+              actualizadoEn: t.actualizadoEn,
+            });
+          }
+          // Tests sin t40m sólo tenían métricas que el usuario quitó —
+          // se descartan en silencio.
+        }
+      });
   }
 }
 

@@ -1,22 +1,20 @@
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import {
-  ResponsiveContainer,
-  ComposedChart,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  Area,
-  Line,
-} from 'recharts';
+import { ResponsiveContainer, LineChart, Line, YAxis } from 'recharts';
 import { db } from '../db/schema';
-import { MetricCard } from '../components/MetricCard';
-import { ChartCard } from '../components/ChartCard';
 import { TestFisicoCard } from '../components/TestFisicoCard';
 import { IconoMas, IconoFisico } from '../components/icons';
-import { ultimoTest, deltaMetrica, seriePeso } from '../lib/fisico';
-import { formatoCorto } from '../lib/fechas';
+import {
+  ultimoTestDeKind,
+  deltaUltimo,
+  serieEvolucion,
+  etiquetaKind,
+  formatearValor,
+  menorEsMejor,
+} from '../lib/fisico';
+import type { KindTestFisico, TestFisico } from '../types';
+
+const KINDS_ORDEN: KindTestFisico[] = ['sentadilla', 'press_banca', 'bronco', '40m'];
 
 export function Fisico() {
   const tests = useLiveQuery(
@@ -24,12 +22,6 @@ export function Fisico() {
     [],
     [],
   );
-
-  const ult = ultimoTest(tests);
-  const deltaPeso = deltaMetrica(tests, (t) => t.pesoCorporal, 30);
-  const deltaAltura = deltaMetrica(tests, (t) => t.altura, 365);
-  const deltaT40 = deltaMetrica(tests, (t) => t.t40m, 30);
-  const puntosPeso = seriePeso(tests);
 
   return (
     <div className="max-w-3xl mx-auto space-y-4">
@@ -42,42 +34,16 @@ export function Fisico() {
         <p className="text-sm text-slate-600 dark:text-slate-400 ml-4">
           {tests.length > 0
             ? `${tests.length} test${tests.length === 1 ? '' : 's'} cargado${tests.length === 1 ? '' : 's'}`
-            : 'Registrá tus tests físicos y mediciones'}
+            : 'Tus benchmarks: fuerza, velocidad y resistencia'}
         </p>
       </div>
 
-      {/* Métricas 2x2 (si hay un último test) */}
-      {ult && (
-        <div className="grid grid-cols-2 gap-3">
-          <MetricCard
-            label="Peso"
-            valor={ult.pesoCorporal ?? '—'}
-            sufijo={ult.pesoCorporal !== undefined ? 'kg' : undefined}
-            color="azul"
-            delta={deltaPeso ?? undefined}
-          />
-          <MetricCard
-            label="Altura"
-            valor={ult.altura !== undefined ? (ult.altura / 100).toFixed(2) : '—'}
-            sufijo={ult.altura !== undefined ? 'm' : undefined}
-            color="amarillo"
-            delta={deltaAltura ?? undefined}
-          />
-          <MetricCard
-            label="40m"
-            valor={ult.t40m ?? '—'}
-            sufijo={ult.t40m !== undefined ? 's' : undefined}
-            color="azul"
-            delta={deltaT40 ?? undefined}
-          />
-          <MetricCard
-            label="Beep test"
-            valor={ult.beepTest ?? '—'}
-            sufijo={ult.beepTest !== undefined ? 'nivel' : undefined}
-            color="verde"
-          />
-        </div>
-      )}
+      {/* Tarjetas por tipo de test */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {KINDS_ORDEN.map((kind) => (
+          <TarjetaKind key={kind} kind={kind} tests={tests} />
+        ))}
+      </div>
 
       {/* Botón cargar */}
       <Link
@@ -88,63 +54,107 @@ export function Fisico() {
         Nuevo test físico
       </Link>
 
-      {/* Gráfico de evolución del peso */}
-      {puntosPeso.length >= 2 && (
-        <ChartCard titulo="Evolución del peso corporal" subtitulo={`${puntosPeso.length} mediciones`}>
-          <div className="h-52">
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={puntosPeso} margin={{ top: 8, right: 12, left: -18, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="gradPeso" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#1B3A6B" stopOpacity={0.25} />
-                    <stop offset="100%" stopColor="#1B3A6B" stopOpacity={0.02} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.25)" />
-                <XAxis
-                  dataKey="fecha"
-                  tickFormatter={formatoCorto}
-                  tick={{ fontSize: 11, fill: 'currentColor' }}
-                  stroke="currentColor"
-                  className="text-slate-500 dark:text-slate-400"
-                />
-                <YAxis
-                  domain={['dataMin - 2', 'dataMax + 2']}
-                  tick={{ fontSize: 11, fill: 'currentColor' }}
-                  stroke="currentColor"
-                  className="text-slate-500 dark:text-slate-400"
-                />
-                <Tooltip
-                  contentStyle={{ borderRadius: 8, border: '1px solid rgba(0,0,0,0.1)' }}
-                  labelFormatter={(v) => formatoCorto(String(v))}
-                  formatter={(v: number) => [`${v} kg`, 'Peso']}
-                />
-                <Area type="monotone" dataKey="peso" stroke="none" fill="url(#gradPeso)" />
-                <Line
-                  type="monotone"
-                  dataKey="peso"
-                  stroke="#1B3A6B"
-                  strokeWidth={2.5}
-                  dot={{ fill: '#F5B700', stroke: '#1B3A6B', strokeWidth: 2, r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-              </ComposedChart>
-            </ResponsiveContainer>
-          </div>
-        </ChartCard>
-      )}
-
-      {/* Lista o empty state */}
+      {/* Listado completo (orden cronológico inverso) o empty state */}
       {tests.length === 0 ? (
         <EmptyStateFisico />
       ) : (
-        <div className="space-y-3">
-          {tests.map((t) => (
-            <TestFisicoCard key={t.id} test={t} />
-          ))}
+        <div>
+          <h2 className="text-sm font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mt-3 mb-2">
+            Todos los tests
+          </h2>
+          <div className="space-y-3">
+            {tests.map((t) => (
+              <TestFisicoCard key={t.id} test={t} />
+            ))}
+          </div>
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * Tarjeta por tipo de test — último valor + delta + mini sparkline.
+ * Si no hay tests del kind, muestra un estado vacío clickeable que
+ * te lleva a cargar uno.
+ */
+function TarjetaKind({ kind, tests }: { kind: KindTestFisico; tests: TestFisico[] }) {
+  const ultimo = ultimoTestDeKind(tests, kind);
+  const delta = deltaUltimo(tests, kind);
+  const serie = serieEvolucion(tests, kind);
+  const menor = menorEsMejor(kind);
+
+  if (!ultimo) {
+    return (
+      <Link
+        to={`/fisico/nuevo?kind=${kind}`}
+        className="block bg-white dark:bg-slate-900 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 p-4 hover:border-azul-principal transition"
+      >
+        <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          {etiquetaKind(kind)}
+        </p>
+        <p className="mt-2 text-sm text-slate-400 italic">Sin tests todavía</p>
+        <p className="mt-3 text-xs text-azul-principal dark:text-amarillo-acento font-semibold">
+          + Cargar primero
+        </p>
+      </Link>
+    );
+  }
+
+  // Símbolo de delta: ▲ subió / ▼ bajó / = sin cambio
+  const flecha = delta && delta.absoluto !== 0 ? (delta.absoluto > 0 ? '▲' : '▼') : null;
+  const colorDelta = !delta
+    ? ''
+    : delta.esMejora
+      ? 'text-verde-record'
+      : 'text-rojo';
+
+  return (
+    <Link
+      to={`/fisico/${ultimo.id}`}
+      className="block bg-white dark:bg-slate-900 rounded-xl shadow-tarjeta border border-slate-200 dark:border-slate-800 p-4 hover:border-azul-principal/30 active:scale-[0.99] transition"
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            {etiquetaKind(kind)}
+          </p>
+          <p className="mt-1 text-xl font-bold tabular-nums">{formatearValor(ultimo)}</p>
+        </div>
+        {ultimo.fueRecord && (
+          <span className="text-[10px] font-bold uppercase bg-verde-record text-white px-1.5 py-0.5 rounded">
+            🏆 PR
+          </span>
+        )}
+      </div>
+
+      {delta && flecha && (
+        <p className={['text-xs font-semibold mt-1', colorDelta].join(' ')}>
+          {flecha} {Math.abs(delta.absoluto)}{' '}
+          {kind === 'sentadilla' || kind === 'press_banca' ? 'kg 1RM' : 's'}{' '}
+          vs anterior
+        </p>
+      )}
+
+      {/* Mini sparkline */}
+      {serie.length >= 2 && (
+        <div className="h-10 mt-2 -mx-1">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={serie}>
+              <YAxis hide domain={['auto', 'auto']} reversed={menor} />
+              <Line
+                type="monotone"
+                dataKey="valor"
+                stroke="#1B3A6B"
+                strokeWidth={2}
+                dot={false}
+                isAnimationActive={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+    </Link>
   );
 }
 
@@ -156,8 +166,8 @@ function EmptyStateFisico() {
       </div>
       <h2 className="mt-3 font-semibold">Todavía no cargaste tests</h2>
       <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 max-w-sm mx-auto">
-        Los tests te permiten ver cómo evoluciona tu peso, altura, velocidad en 40m y resistencia
-        en el tiempo.
+        Anotá tu sentadilla, press de banca, Bronco o 40m para ver tu evolución y batir tus
+        propios récords.
       </p>
     </div>
   );

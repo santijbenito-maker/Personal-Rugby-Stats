@@ -171,6 +171,14 @@ function App() {
             }
           />
           <Route
+            path="fisico/:id/editar"
+            element={
+              <Suspense fallback={<LoadingSkeleton />}>
+                <NuevoTest />
+              </Suspense>
+            }
+          />
+          <Route
             path="lesiones"
             element={
               <Suspense fallback={<LoadingSkeleton />}>
