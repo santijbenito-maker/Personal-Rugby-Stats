@@ -164,16 +164,32 @@ export type GymSesion = {
 // Tests físicos
 // ───────────────────────────────────────────────────────────────
 
+/**
+ * Tipos de test físico soportados. Cada test es un benchmark puntual
+ * (no un entrenamiento). Diferenciar por tipo permite:
+ *   - Form con campos específicos a cada test
+ *   - Detección automática de PR comparando contra tests del mismo tipo
+ *   - Gráfica de evolución separada por tipo
+ */
+export type KindTestFisico = '40m' | 'sentadilla' | 'press_banca' | 'bronco';
+
 export type TestFisico = {
   id: string;
   fecha: string;
-  pesoCorporal?: number; // kg
-  altura?: number; // cm
-  t40m?: number; // segundos
-  beepTest?: number; // nivel
-  flexiones?: number;
-  abdominales?: number;
+  kind: KindTestFisico;
+  /** Peso levantado en kg. Sólo para sentadilla / press_banca. */
+  pesoKg?: number;
+  /** Repeticiones logradas con ese peso. Sólo para sentadilla / press_banca. */
+  reps?: number;
+  /** Tiempo total en segundos. Para 40m (decimales) y bronco (totales). */
+  segundos?: number;
+  /** Sensación física durante el test (1-10). */
+  sensacionFisico: number;
+  /** Esfuerzo percibido (RPE, 1-10). */
+  rpe: number;
   notas?: string;
+  /** Marcado true al guardar si batió el récord previo de este mismo kind. */
+  fueRecord?: boolean;
   creadoEn: number;
   actualizadoEn: number;
 };
