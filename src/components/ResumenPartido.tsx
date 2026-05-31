@@ -116,7 +116,7 @@ export function ResumenPartido({ partido: p }: ResumenPartidoProps) {
         />
         <LineaResumen
           titulo="Rol 9/10"
-          valor={`promedio ${rolPromedio}/10 (ruck ${p.velocidadRuck} · pase ${p.calidadPase} · lectura ${p.lecturaJuego})`}
+          valor={`promedio ${rolPromedio}/5 (ruck ${p.velocidadRuck} · pase ${p.calidadPase} · lectura ${p.lecturaJuego})`}
         />
         {(p.penalesCometidos > 0 || p.amarillas > 0 || p.rojas > 0) && (
           <LineaResumen
@@ -126,7 +126,7 @@ export function ResumenPartido({ partido: p }: ResumenPartidoProps) {
         )}
         <LineaResumen
           titulo="Sensaciones"
-          valor={`💪 ${p.sensacionFisico}/10 · 🎯 ${p.sensacionTecnico}/10 · ⭐ rating ${p.rating}/10`}
+          valor={`💪 ${p.sensacionFisico}/5 · 🎯 ${p.sensacionTecnico}/5 · ⭐ rating ${p.rating}/10`}
         />
       </ul>
     </section>

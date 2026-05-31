@@ -68,14 +68,14 @@ function partidoInicial(): Partido {
     kicksTouchIntentados: 0,
     kicksDespeje: 0,
     drops: 0,
-    velocidadRuck: 5,
-    calidadPase: 5,
-    lecturaJuego: 5,
+    velocidadRuck: 3,
+    calidadPase: 3,
+    lecturaJuego: 3,
     penalesCometidos: 0,
     amarillas: 0,
     rojas: 0,
-    sensacionFisico: 5,
-    sensacionTecnico: 5,
+    sensacionFisico: 3,
+    sensacionTecnico: 3,
     rating: 5,
     notasBien: '',
     notasMejorar: '',
@@ -377,6 +377,7 @@ export function NuevoPartido() {
         <Slider10
           label="Físico"
           hint="💪"
+          max={5}
           descripcion="Cómo respondió tu cuerpo"
           valor={p.sensacionFisico}
           onChange={(v) => set('sensacionFisico', v)}
@@ -386,6 +387,7 @@ export function NuevoPartido() {
         <Slider10
           label="Técnico"
           hint="🎯"
+          max={5}
           descripcion="Cómo te salieron las jugadas"
           valor={p.sensacionTecnico}
           onChange={(v) => set('sensacionTecnico', v)}
@@ -657,6 +659,7 @@ function PestañaRol({ p, set }: { p: Partido; set: Setter }) {
       <Slider10
         label="Velocidad de distribución del ruck"
         hint="⚡"
+        max={5}
         valor={p.velocidadRuck}
         onChange={(v) => set('velocidadRuck', v)}
         etiquetaMin="lento"
@@ -665,6 +668,7 @@ function PestañaRol({ p, set }: { p: Partido; set: Setter }) {
       <Slider10
         label="Calidad / precisión del pase"
         hint="🎯"
+        max={5}
         valor={p.calidadPase}
         onChange={(v) => set('calidadPase', v)}
         etiquetaMin="impreciso"
@@ -673,6 +677,7 @@ function PestañaRol({ p, set }: { p: Partido; set: Setter }) {
       <Slider10
         label="Lectura de juego y decisiones"
         hint="🧠"
+        max={5}
         valor={p.lecturaJuego}
         onChange={(v) => set('lecturaJuego', v)}
         etiquetaMin="dudé"

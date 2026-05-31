@@ -383,6 +383,41 @@ class RugbyDB extends Dexie {
           // se descartan en silencio.
         }
       });
+
+    // Versión 12: las calificaciones subjetivas de partido pasan de 1-10
+    // a 1-5 (excepto el rating general que queda 1-10). Convertimos los
+    // valores guardados con round(v/2) y clampeamos al rango [1,5].
+    // Afecta: velocidadRuck, calidadPase, lecturaJuego, sensacionFisico,
+    // sensacionTecnico. NO afecta entrenamientos ni tests físicos, sólo
+    // partidos.
+    this.version(12)
+      .stores({
+        partidos: 'id, fecha, actualizadoEn',
+        entrenamientos: 'id, fecha, asistencia, actualizadoEn',
+        gym_sesiones: 'id, fecha, foco, actualizadoEn',
+        gym_ejercicios: 'id, nombre, grupoMuscular, frecuenciaDeUso, actualizadoEn',
+        tests_fisicos: 'id, fecha, kind, actualizadoEn',
+        lesiones: 'id, fecha, fechaAlta, actualizadoEn',
+        config: 'clave, actualizadoEn',
+        videos: 'id, partidoId, creadoEn',
+        tombstones: '[kind+id], deletedAt',
+      })
+      .upgrade(async (tx) => {
+        const a5 = (v: unknown): number => {
+          if (typeof v !== 'number' || !Number.isFinite(v)) return 3;
+          return Math.min(5, Math.max(1, Math.round(v / 2)));
+        };
+        await tx
+          .table('partidos')
+          .toCollection()
+          .modify((p: Partial<Partido>) => {
+            p.velocidadRuck = a5(p.velocidadRuck);
+            p.calidadPase = a5(p.calidadPase);
+            p.lecturaJuego = a5(p.lecturaJuego);
+            p.sensacionFisico = a5(p.sensacionFisico);
+            p.sensacionTecnico = a5(p.sensacionTecnico);
+          });
+      });
   }
 }
 
