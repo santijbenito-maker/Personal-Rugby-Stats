@@ -32,8 +32,8 @@ function testInicial(kind: KindTestFisico = 'sentadilla'): TestFisico {
     pesoKg: undefined,
     reps: undefined,
     segundos: undefined,
-    sensacionFisico: 7,
-    rpe: 7,
+    sensacionFisico: 3,
+    rpe: 3,
     notas: '',
     creadoEn: t,
     actualizadoEn: t,
@@ -323,6 +323,7 @@ export function NuevoTest() {
         <Slider10
           label="Sensación física"
           hint="💪"
+          max={5}
           descripcion="Cómo te sentiste durante el test"
           valor={t.sensacionFisico}
           onChange={(v) => set('sensacionFisico', v)}
@@ -332,7 +333,8 @@ export function NuevoTest() {
         <Slider10
           label="Esfuerzo (RPE)"
           hint="🔥"
-          descripcion="Qué tan exigente fue (1 = suave, 10 = al límite)"
+          max={5}
+          descripcion="Qué tan exigente fue (1 = suave, 5 = al límite)"
           valor={t.rpe}
           onChange={(v) => set('rpe', v)}
           etiquetaMin="muy suave"

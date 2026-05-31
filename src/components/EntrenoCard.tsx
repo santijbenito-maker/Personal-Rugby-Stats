@@ -77,9 +77,9 @@ export function EntrenoCard({ entreno: e }: EntrenoCardProps) {
 
       {/* Stats inferiores */}
       <div className="mt-3 grid grid-cols-3 gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
-        <Mini label="RPE" valor={`${e.rpe}/10`} />
-        <Mini label="💪 Físico" valor={`${e.sensacionFisico}/10`} />
-        <Mini label="🎯 Técnico" valor={`${e.sensacionTecnico}/10`} />
+        <Mini label="RPE" valor={`${e.rpe}/5`} />
+        <Mini label="💪 Físico" valor={`${e.sensacionFisico}/5`} />
+        <Mini label="🎯 Técnico" valor={`${e.sensacionTecnico}/5`} />
       </div>
     </Link>
   );

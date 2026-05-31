@@ -50,9 +50,9 @@ function entrenoInicial(): Entrenamiento {
     asistencia: 'Presente',
     ejerciciosTrabajados: [],
     otrosEjercicios: '',
-    rpe: 6,
-    sensacionFisico: 7,
-    sensacionTecnico: 7,
+    rpe: 3,
+    sensacionFisico: 3,
+    sensacionTecnico: 3,
     notas: '',
     creadoEn: t,
     actualizadoEn: t,
@@ -279,10 +279,11 @@ export function NuevoEntreno() {
       </Seccion>
 
       {/* 6. Esfuerzo (RPE) */}
-      <Seccion titulo="Esfuerzo (RPE)" descripcion="1 muy suave · 10 máximo">
+      <Seccion titulo="Esfuerzo (RPE)" descripcion="1 muy suave · 5 máximo">
         <Slider10
           label="¿Qué tan exigente fue?"
           hint="🔥"
+          max={5}
           valor={e.rpe}
           onChange={(v) => set('rpe', v)}
           etiquetaMin="muy suave"
@@ -297,6 +298,7 @@ export function NuevoEntreno() {
         <Slider10
           label="Físico"
           hint="💪"
+          max={5}
           descripcion="Cómo respondió tu cuerpo (energía, piernas, cansancio)"
           valor={e.sensacionFisico}
           onChange={(v) => set('sensacionFisico', v)}
@@ -306,6 +308,7 @@ export function NuevoEntreno() {
         <Slider10
           label="Técnico"
           hint="🎯"
+          max={5}
           descripcion="Cómo te salieron las cosas (pases, decisiones, timing)"
           valor={e.sensacionTecnico}
           onChange={(v) => set('sensacionTecnico', v)}

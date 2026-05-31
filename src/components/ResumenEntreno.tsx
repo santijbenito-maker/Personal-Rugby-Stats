@@ -55,10 +55,10 @@ export function ResumenEntreno({ entreno: e }: ResumenEntrenoProps) {
               : e.otrosEjercicios || '—'
           }
         />
-        <Linea titulo="RPE" valor={`${e.rpe}/10 · ${etiquetaRPE(e.rpe)}`} />
+        <Linea titulo="RPE" valor={`${e.rpe}/5 · ${etiquetaRPE(e.rpe)}`} />
         <Linea
           titulo="Sensación"
-          valor={`💪 ${e.sensacionFisico}/10 · 🎯 ${e.sensacionTecnico}/10 · prom. ${promedioSensacion}/10`}
+          valor={`💪 ${e.sensacionFisico}/5 · 🎯 ${e.sensacionTecnico}/5 · prom. ${promedioSensacion}/5`}
         />
         {e.notas && <Linea titulo="Notas" valor={e.notas} />}
       </ul>
@@ -66,10 +66,12 @@ export function ResumenEntreno({ entreno: e }: ResumenEntrenoProps) {
   );
 }
 
+/** Etiqueta legible del RPE en escala 1-5. */
 export function etiquetaRPE(rpe: number): string {
-  if (rpe <= 3) return 'Suave';
-  if (rpe <= 6) return 'Moderado';
-  if (rpe <= 8) return 'Exigente';
+  if (rpe <= 1) return 'Muy suave';
+  if (rpe <= 2) return 'Suave';
+  if (rpe <= 3) return 'Moderado';
+  if (rpe <= 4) return 'Exigente';
   return 'Al límite / Máximo';
 }
 
