@@ -55,17 +55,17 @@ export type Partido = {
   kicksDespeje: number;
   drops: number;
   // Rol 9/10
-  velocidadRuck: number; // 1-10
-  calidadPase: number; // 1-10
-  lecturaJuego: number; // 1-10
+  velocidadRuck: number; // 1-5 (rating)
+  calidadPase: number; // 1-5 (rating)
+  lecturaJuego: number; // 1-5 (rating)
   // Disciplina
   penalesCometidos: number;
   amarillas: number;
   rojas: number;
   // Sensaciones
-  sensacionFisico: number; // 1-10
-  sensacionTecnico: number; // 1-10
-  rating: number; // 1-10
+  sensacionFisico: number; // 1-5 (rating)
+  sensacionTecnico: number; // 1-5 (rating)
+  rating: number; // 1-10 (rating general — único que queda en escala /10)
   // Notas
   notasBien?: string;
   notasMejorar?: string;
