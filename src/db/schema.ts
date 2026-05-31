@@ -418,6 +418,43 @@ class RugbyDB extends Dexie {
             p.sensacionTecnico = a5(p.sensacionTecnico);
           });
       });
+
+    // Versión 13: extiende el cambio 1-10 → 1-5 a entrenamientos y tests
+    // físicos (el usuario pidió mismo formato para toda calificación
+    // subjetiva). Gym sesion queda como está — no fue mencionado.
+    this.version(13)
+      .stores({
+        partidos: 'id, fecha, actualizadoEn',
+        entrenamientos: 'id, fecha, asistencia, actualizadoEn',
+        gym_sesiones: 'id, fecha, foco, actualizadoEn',
+        gym_ejercicios: 'id, nombre, grupoMuscular, frecuenciaDeUso, actualizadoEn',
+        tests_fisicos: 'id, fecha, kind, actualizadoEn',
+        lesiones: 'id, fecha, fechaAlta, actualizadoEn',
+        config: 'clave, actualizadoEn',
+        videos: 'id, partidoId, creadoEn',
+        tombstones: '[kind+id], deletedAt',
+      })
+      .upgrade(async (tx) => {
+        const a5 = (v: unknown): number => {
+          if (typeof v !== 'number' || !Number.isFinite(v)) return 3;
+          return Math.min(5, Math.max(1, Math.round(v / 2)));
+        };
+        await tx
+          .table('entrenamientos')
+          .toCollection()
+          .modify((e: Partial<Entrenamiento>) => {
+            e.rpe = a5(e.rpe);
+            e.sensacionFisico = a5(e.sensacionFisico);
+            e.sensacionTecnico = a5(e.sensacionTecnico);
+          });
+        await tx
+          .table('tests_fisicos')
+          .toCollection()
+          .modify((t: { rpe?: number; sensacionFisico?: number }) => {
+            t.rpe = a5(t.rpe);
+            t.sensacionFisico = a5(t.sensacionFisico);
+          });
+      });
   }
 }
 

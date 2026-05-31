@@ -34,8 +34,8 @@ export function TestFisicoCard({ test: t }: Props) {
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
-        <Mini label="💪 Sensación" valor={`${t.sensacionFisico}/10`} />
-        <Mini label="🔥 RPE" valor={`${t.rpe}/10`} />
+        <Mini label="💪 Sensación" valor={`${t.sensacionFisico}/5`} />
+        <Mini label="🔥 RPE" valor={`${t.rpe}/5`} />
       </div>
     </Link>
   );

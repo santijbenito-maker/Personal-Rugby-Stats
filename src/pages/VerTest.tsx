@@ -99,8 +99,8 @@ export function VerTest() {
           {test.kind === 'bronco' && test.segundos !== undefined && (
             <Fila label="Total" valor={formatearMmSs(test.segundos)} />
           )}
-          <Fila label="Sensación física" valor={`${test.sensacionFisico}/10`} />
-          <Fila label="RPE (esfuerzo)" valor={`${test.rpe}/10`} />
+          <Fila label="Sensación física" valor={`${test.sensacionFisico}/5`} />
+          <Fila label="RPE (esfuerzo)" valor={`${test.rpe}/5`} />
         </ul>
       </div>
 

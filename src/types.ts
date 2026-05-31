@@ -106,9 +106,9 @@ export type Entrenamiento = {
   asistencia: Asistencia;
   ejerciciosTrabajados: EjercicioTrabajado[];
   otrosEjercicios?: string;
-  rpe: number; // 1-10
-  sensacionFisico: number; // 1-10
-  sensacionTecnico: number; // 1-10
+  rpe: number; // 1-5 (rating)
+  sensacionFisico: number; // 1-5 (rating)
+  sensacionTecnico: number; // 1-5 (rating)
   notas?: string;
   creadoEn: number;
   actualizadoEn: number;
@@ -183,9 +183,9 @@ export type TestFisico = {
   reps?: number;
   /** Tiempo total en segundos. Para 40m (decimales) y bronco (totales). */
   segundos?: number;
-  /** Sensación física durante el test (1-10). */
+  /** Sensación física durante el test (1-5). */
   sensacionFisico: number;
-  /** Esfuerzo percibido (RPE, 1-10). */
+  /** Esfuerzo percibido (RPE, 1-5). */
   rpe: number;
   notas?: string;
   /** Marcado true al guardar si batió el récord previo de este mismo kind. */
