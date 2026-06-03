@@ -33,6 +33,11 @@ const NuevaLesion = lazy(() =>
 );
 const VerLesion = lazy(() => import('./pages/VerLesion').then((m) => ({ default: m.VerLesion })));
 const Perfil = lazy(() => import('./pages/Perfil').then((m) => ({ default: m.Perfil })));
+const Rivales = lazy(() => import('./pages/Rivales').then((m) => ({ default: m.Rivales })));
+const NuevoRival = lazy(() =>
+  import('./pages/NuevoRival').then((m) => ({ default: m.NuevoRival })),
+);
+const VerRival = lazy(() => import('./pages/VerRival').then((m) => ({ default: m.VerRival })));
 const NoEncontrado = lazy(() =>
   import('./pages/NoEncontrado').then((m) => ({ default: m.NoEncontrado })),
 );
@@ -215,6 +220,38 @@ function App() {
             element={
               <Suspense fallback={<LoadingSkeleton />}>
                 <Perfil />
+              </Suspense>
+            }
+          />
+          <Route
+            path="rivales"
+            element={
+              <Suspense fallback={<LoadingSkeleton />}>
+                <Rivales />
+              </Suspense>
+            }
+          />
+          <Route
+            path="rivales/nuevo"
+            element={
+              <Suspense fallback={<LoadingSkeleton />}>
+                <NuevoRival />
+              </Suspense>
+            }
+          />
+          <Route
+            path="rivales/:id"
+            element={
+              <Suspense fallback={<LoadingSkeleton />}>
+                <VerRival />
+              </Suspense>
+            }
+          />
+          <Route
+            path="rivales/:id/editar"
+            element={
+              <Suspense fallback={<LoadingSkeleton />}>
+                <NuevoRival />
               </Suspense>
             }
           />

@@ -4,13 +4,15 @@ import { db } from '../db/schema';
 import { formatoLargo, hace } from '../lib/fechas';
 import { ResumenPartido } from '../components/ResumenPartido';
 import { VideosPartido } from '../components/VideosPartido';
-import { IconoFlechaIzq } from '../components/icons';
+import { IconoFlechaIzq, IconoRivales } from '../components/icons';
 import { eliminarVideosDePartido } from '../lib/videos';
+import { buscarRivalPorNombre } from '../lib/scouting';
 
 export function VerPartido() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const partido = useLiveQuery(() => (id ? db.partidos.get(id) : undefined), [id]);
+  const rivales = useLiveQuery(() => db.rivales.toArray(), [], []);
 
   if (partido === undefined) {
     return (
@@ -51,6 +53,11 @@ export function VerPartido() {
           </p>
         </div>
       </div>
+
+      {/* Atajo a la ficha de scouting del rival (si existe) o a crear una */}
+      <ScoutingLink rivalNombre={partido.rival} rivalIdExistente={
+        buscarRivalPorNombre(rivales, partido.rival)?.id
+      } />
 
       {/* Resumen completo */}
       <ResumenPartido partido={partido} />
@@ -95,6 +102,39 @@ export function VerPartido() {
         </button>
       </div>
     </div>
+  );
+}
+
+/**
+ * Atajo para ir a la ficha de scouting del rival. Si ya existe, te lleva al
+ * detalle. Si no, abre el form de nuevo rival con el nombre pre-cargado.
+ */
+function ScoutingLink({
+  rivalNombre,
+  rivalIdExistente,
+}: {
+  rivalNombre: string;
+  rivalIdExistente?: string;
+}) {
+  if (!rivalNombre) return null;
+  const destino = rivalIdExistente
+    ? `/rivales/${rivalIdExistente}`
+    : `/rivales/nuevo?nombre=${encodeURIComponent(rivalNombre)}`;
+  return (
+    <Link
+      to={destino}
+      className="flex items-center justify-between gap-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 px-4 py-2.5 hover:border-azul-principal/40 transition"
+    >
+      <div className="flex items-center gap-2 min-w-0">
+        <IconoRivales size={18} className="text-azul-principal dark:text-amarillo-acento shrink-0" />
+        <span className="text-sm font-medium truncate">
+          {rivalIdExistente
+            ? `Ver scouting de ${rivalNombre}`
+            : `Cargar scouting de ${rivalNombre}`}
+        </span>
+      </div>
+      <span className="text-slate-400 text-sm shrink-0">→</span>
+    </Link>
   );
 }
 

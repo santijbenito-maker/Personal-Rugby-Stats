@@ -233,6 +233,78 @@ export type Lesion = {
 };
 
 // ───────────────────────────────────────────────────────────────
+// Rivales (scouting)
+// ───────────────────────────────────────────────────────────────
+
+/** Categorías más comunes de equipo. "Otro" para edge cases. */
+export type CategoriaRival =
+  | 'M14'
+  | 'M15'
+  | 'M16'
+  | 'M17'
+  | 'M18'
+  | 'M19'
+  | 'Senior'
+  | 'Otro';
+
+/** Tags predefinidos para clasificar cómo juega un rival. El usuario
+ *  además puede tipear los suyos propios (se guardan en el array). */
+export type TagRivalPreset =
+  | 'Pateadora'
+  | 'Forwards pesados'
+  | 'Juego rápido'
+  | 'Defensa línea alta'
+  | 'Defensa pasiva'
+  | 'Ataque ancho'
+  | 'Ataque centrado'
+  | 'Lineouts fuertes'
+  | 'Scrum fuerte'
+  | 'Mucha indisciplina'
+  | 'Buen ruck'
+  | 'Físicos';
+
+export const TAGS_RIVAL_PRESET: TagRivalPreset[] = [
+  'Pateadora',
+  'Forwards pesados',
+  'Juego rápido',
+  'Defensa línea alta',
+  'Defensa pasiva',
+  'Ataque ancho',
+  'Ataque centrado',
+  'Lineouts fuertes',
+  'Scrum fuerte',
+  'Mucha indisciplina',
+  'Buen ruck',
+  'Físicos',
+];
+
+/** Un jugador a marcar del equipo rival. */
+export type JugadorRival = {
+  id: string;
+  nombre: string;
+  numero?: number;
+  /** Posición libre: "10", "Wing", "Hooker", etc. */
+  posicion?: string;
+  /** Notas: qué hace bien, qué hace mal, debilidad explotable. */
+  notas?: string;
+};
+
+export type Rival = {
+  id: string;
+  nombre: string;
+  categoria?: CategoriaRival;
+  /** Tags activos. Puede mezclar presets con custom. */
+  tags: string[];
+  /** Cómo juegan (sistema, ritmo, patrones). */
+  notasGenerales?: string;
+  /** Apunte para el próximo partido contra ellos — aparece arriba de todo. */
+  notasProximoPartido?: string;
+  jugadores: JugadorRival[];
+  creadoEn: number;
+  actualizadoEn: number;
+};
+
+// ───────────────────────────────────────────────────────────────
 // Videos (binarios adjuntos a un partido)
 // ───────────────────────────────────────────────────────────────
 

@@ -8,6 +8,7 @@ import type {
   Lesion,
   Config,
   VideoPartido,
+  Rival,
 } from '../types';
 import { estoyAplicandoRemoto } from '../lib/syncFlag';
 
@@ -33,6 +34,7 @@ export const TIPOS_SINCRONIZADOS = {
   tests_fisicos: 'test_fisico',
   lesiones: 'lesion',
   config: 'config',
+  rivales: 'rival',
 } as const;
 
 export type TablaSync = keyof typeof TIPOS_SINCRONIZADOS;
@@ -57,6 +59,7 @@ class RugbyDB extends Dexie {
   config!: Table<Config, string>;
   videos!: Table<VideoPartido, string>;
   tombstones!: Table<Tombstone, [string, string]>;
+  rivales!: Table<Rival, string>;
 
   constructor() {
     super('RugbyStatsSB');
@@ -454,6 +457,24 @@ class RugbyDB extends Dexie {
             t.rpe = a5(t.rpe);
             t.sensacionFisico = a5(t.sensacionFisico);
           });
+      });
+
+    // Versión 14: nueva tabla "rivales" para scouting. Independiente — sólo
+    // agrega un store nuevo, no migra datos existentes. Indexamos nombre
+    // (lowercase es responsabilidad del caller) y categoria para listar
+    // y filtrar rápido.
+    this.version(14)
+      .stores({
+        partidos: 'id, fecha, actualizadoEn',
+        entrenamientos: 'id, fecha, asistencia, actualizadoEn',
+        gym_sesiones: 'id, fecha, foco, actualizadoEn',
+        gym_ejercicios: 'id, nombre, grupoMuscular, frecuenciaDeUso, actualizadoEn',
+        tests_fisicos: 'id, fecha, kind, actualizadoEn',
+        lesiones: 'id, fecha, fechaAlta, actualizadoEn',
+        config: 'clave, actualizadoEn',
+        videos: 'id, partidoId, creadoEn',
+        tombstones: '[kind+id], deletedAt',
+        rivales: 'id, nombre, categoria, actualizadoEn',
       });
   }
 }

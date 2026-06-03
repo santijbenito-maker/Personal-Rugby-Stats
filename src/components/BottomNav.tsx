@@ -2,8 +2,9 @@ import { NavLink } from 'react-router-dom';
 import { TABS_NAV } from './icons';
 
 /**
- * Bottom navigation para celular: 6 tabs con ícono + label.
- * Fija al fondo, respetando el safe-area inset del iPhone.
+ * Bottom navigation para celular: tabs con ícono + label (texto chico).
+ * Fija al fondo, respetando el safe-area inset del iPhone. Soporta hasta
+ * 7-8 tabs; más que eso requiere otro patrón (drawer / "más").
  */
 export function BottomNav() {
   return (

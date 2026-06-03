@@ -217,6 +217,17 @@ export function IconoInfo({ size = 24, className, strokeWidth = 2 }: IconProps) 
   );
 }
 
+// Rivales — escudo (shield) con persona dentro
+export function IconoRivales({ size = 24, className, strokeWidth = 2 }: IconProps) {
+  return (
+    <svg {...base(size, className)} strokeWidth={strokeWidth} aria-hidden>
+      <path d="M12 2 4 5v6c0 5 3.5 9 8 11 4.5-2 8-6 8-11V5l-8-3Z" />
+      <circle cx="12" cy="10" r="2" />
+      <path d="M8 16c.5-2 2-3 4-3s3.5 1 4 3" />
+    </svg>
+  );
+}
+
 /** Metadata de cada tab de la navegación principal. */
 export type TabNav = {
   ruta: string;
@@ -231,4 +242,5 @@ export const TABS_NAV: TabNav[] = [
   { ruta: '/gym', label: 'Gym', Icono: IconoGym },
   { ruta: '/fisico', label: 'Físico', Icono: IconoFisico },
   { ruta: '/lesiones', label: 'Lesiones', Icono: IconoLesiones },
+  { ruta: '/rivales', label: 'Rivales', Icono: IconoRivales },
 ];
